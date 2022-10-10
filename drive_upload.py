@@ -16,7 +16,7 @@ def upload_to_folder(real_folder_id, file_name, file_type):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    creds = Credentials.from_authorized_user_file('token.json')
+    creds = Credentials.from_authorized_user_file('/home/wren/Desktop/pi-tracker/pi-tracker/token.json')
 
     try:
         # create drive api client

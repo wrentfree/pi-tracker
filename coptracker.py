@@ -10,7 +10,10 @@ from datetime import timedelta
 from drive_upload import *
 import csv
 
-print('Starting ...')
+
+today = date.today()
+today_string = today.strftime('%b-%d-%Y')
+print(today_string + ' Starting ...')
 display = Display(visible=0, size=(1600, 1200))
 display.start()
 chrome_options = Options()
@@ -29,7 +32,6 @@ def table_scrape():
     table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
 
     # Use yesterday's date as the title of the csv
-    today = date.today()
     yesterday = today - timedelta(days = 1)
     yesterdayString = yesterday.strftime('%b-%d-%Y')
 
@@ -65,6 +67,7 @@ def table_scrape():
                               'Arresting Agency': agency, 'Charges': charges})
        
     print('Done')
+    print('')
     driver.quit()
     return yesterdayString + '.csv'
 
