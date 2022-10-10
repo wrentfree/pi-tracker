@@ -7,6 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from datetime import date
 from datetime import timedelta
+from drive_upload import *
 import csv
 
 print('Starting ...')
@@ -17,49 +18,61 @@ chrome_options.add_argument("--disable-extensions")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--no-sandbox")
 driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', \
-                          chrome_options=chrome_options)
+                          options=chrome_options)
 print('webdriver loaded')
 
-# Navigate to target website
-driver.get('http://www.hcsheriff.gov/cor/display.php?day=1')
+# Scrapes the previous day's booking table, returns csv name.
+def table_scrape():
+    # Navigate to target website
+    driver.get('http://www.hcsheriff.gov/cor/display.php?day=1')
 
-table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
+    table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
 
-# Use yesterday's date as the title of the csv
-today = date.today()
-yesterday = today - timedelta(days = 1)
-yesterdayString = yesterday.strftime('%b-%d-%Y')
+    # Use yesterday's date as the title of the csv
+    today = date.today()
+    yesterday = today - timedelta(days = 1)
+    yesterdayString = yesterday.strftime('%b-%d-%Y')
 
-# Writes the table to a csv named after yesterday's date
-with open(yesterdayString, 'w', newline='') as csvfile:
-    fieldnames = ['Name', 'Address', 'Age at Arrest', 'Arresting Agency', 'Charges']
-    wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
-    wr.writeheader()
-    
-    # parses the rows
-    for row in table.find_elements(By.CSS_SELECTOR, 'tr'):
-        rowtext = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'td')]
-        rowtextarr = rowtext[0].split('\n')
+    # Writes the table to a csv named after yesterday's date
+    with open(yesterdayString + '.csv', 'w', newline='') as csvfile:
+        fieldnames = ['Name', 'Address', 'Age at Arrest', 'Arresting Agency', 'Charges']
+        wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        wr.writeheader()
         
-        # Collects the list of charges
-        ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
-        
-        
-        if 'Booking Report Date' in rowtextarr[0]:
-            continue
-        else:
-            # Format charges
-            charges = ch[0].replace('\n', ', ')
+        # parses the rows
+        for row in table.find_elements(By.CSS_SELECTOR, 'tr'):
+            rowtext = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'td')]
+            rowtextarr = rowtext[0].split('\n')
             
-            # Format all other info
-            name = rowtextarr[0]
-            address = rowtextarr[1]
-            age = [int(i) for i in rowtextarr[2] if i.isdigit()][0]
-            agency = rowtextarr[3]
-            agency = agency[18:]
+            # Collects the list of charges
+            ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
             
-            # Write row in csv file
-            wr.writerow({'Name': name, 'Address': address, 'Age at Arrest': age, \
-                          'Arresting Agency': agency, 'Charges': charges})
-   
-print('Done')
+            
+            if 'Booking Report Date' in rowtextarr[0]:
+                continue
+            else:
+                # Format charges
+                charges = ch[0].replace('\n', ', ')
+                
+                # Format all other info
+                name = rowtextarr[0]
+                address = rowtextarr[1]
+                age = rowtextarr[2][15:17]
+                agency = rowtextarr[3][18:]
+                
+                # Write row in csv file
+                wr.writerow({'Name': name, 'Address': address, 'Age at Arrest': age, \
+                              'Arresting Agency': agency, 'Charges': charges})
+       
+    print('Done')
+    driver.quit()
+    return yesterdayString + '.csv'
+
+# Uploads file to drive
+def upload_to_drive(csv_name):
+    pass
+
+file_name = table_scrape()
+upload_to_folder(real_folder_id='1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND', \
+                 file_name=file_name, \
+                 file_type="text/csv")
