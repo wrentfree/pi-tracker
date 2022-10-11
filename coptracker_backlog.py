@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from datetime import date
 from datetime import timedelta
 from drive_upload import *
+from address_parse import *
 import csv
 
 # Returns an array of all created csv's
@@ -38,7 +39,8 @@ def scrape_all_tables():
 
         # Writes the table to a csv named after yesterday's date
         with open(yesterdayString + '.csv', 'w', newline='') as csvfile:
-            fieldnames = ['Name', 'Address', 'Age at Arrest', 'Arresting Agency', 'Charges']
+            fieldnames = ['Name', 'Address', 'Street Address', 'City', 'Zipcode',
+                          'Age at Arrest', 'Arresting Agency', 'Charges']
             wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
             wr.writeheader()
             
@@ -56,16 +58,32 @@ def scrape_all_tables():
                 else:
                     # Format charges
                     charges = ch[0].replace('\n', ', ')
+                
+                    # Format address
+                    address = rowtextarr[1].strip()
+                    zip_arr = zip_coder(address)
+                    # Add state to address to improve parsing
+                    space_index = address.rfind(' ')
+                    address = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
+                    # Add state even if zip code is missing to help with parsing
+                    if len(zip_arr[1]) == 0:
+                        address += ' TN'
+                    street_addr_arr = address_parser(address)
+                    
+                    # Address values
+                    street_addr = street_addr_arr[0]
+                    city = zip_arr[0]
+                    zipcode = zip_arr[1]
                     
                     # Format all other info
                     name = rowtextarr[0]
-                    address = rowtextarr[1]
                     age = rowtextarr[2][15:17]
                     agency = rowtextarr[3][18:]
                     
                     # Write row in csv file
-                    wr.writerow({'Name': name, 'Address': address, 'Age at Arrest': age, \
-                                  'Arresting Agency': agency, 'Charges': charges})
+                    wr.writerow({'Name': name, 'Address': address, 'Street Address': street_addr,
+                                 'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
+                                 'Arresting Agency': agency, 'Charges': charges})
            
         print('Done ' + str(count))
         file_name_arr.append(yesterdayString + '.csv')

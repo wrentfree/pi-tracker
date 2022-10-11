@@ -8,7 +8,7 @@ booking_id = '1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND'
 
 
 # Create Folder name
-folder_month = (date.today() - timedelta(days=1)).strftime('%b-%Y')
+folder_month = (date.today() - timedelta(days=2)).strftime('%b-%Y')
 folder_name = 'Bookings ' + folder_month
 
 
