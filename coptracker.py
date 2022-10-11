@@ -29,7 +29,7 @@ print('webdriver loaded')
 # Scrapes the previous day's booking table, returns csv name.
 def table_scrape():
     # Navigate to target website
-    driver.get('http://www.hcsheriff.gov/cor/display.php?day=1')
+    driver.get('http://www.hcsheriff.gov/cor/display.php?day=2')
 
     table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
 
