@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.options import Options
 from datetime import date
 from datetime import timedelta
 from drive_upload import *
+from booking_folder_maker import *
 import csv
 
 
@@ -71,11 +72,11 @@ def table_scrape():
     driver.quit()
     return yesterdayString + '.csv'
 
-# Uploads file to drive
-def upload_to_drive(csv_name):
-    pass
-
 file_name = table_scrape()
-upload_to_folder(real_folder_id='1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND', \
+
+# If folder exists and is in the 'Bookings' folder, upload file to folder
+# else create folder in the 'Bookings' folder and upload file to folder
+folder_id = get_folder(folder_name)
+upload_to_folder(real_folder_id=folder_id, \
                  file_name=file_name, \
                  file_type="text/csv")
