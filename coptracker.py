@@ -64,11 +64,11 @@ def table_scrape():
                 zip_arr = zip_coder(address)
                 # Add state to address to improve parsing
                 space_index = address.rfind(' ')
-                address = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
+                address_to_parse = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
                 # Add state even if zip code is missing to help with parsing
                 if len(zip_arr[1]) == 0:
-                    address += ' TN'
-                street_addr_arr = address_parser(address)
+                    address_to_parse = adress + ' TN'
+                street_addr_arr = address_parser(address_to_parse)
                 
                 # Address values
                 street_addr = street_addr_arr[0]
