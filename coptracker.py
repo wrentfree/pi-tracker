@@ -67,7 +67,7 @@ def table_scrape():
                 address_to_parse = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
                 # Add state even if zip code is missing to help with parsing
                 if len(zip_arr[1]) == 0:
-                    address_to_parse = adress + ' TN'
+                    address_to_parse = address + ' TN'
                 street_addr_arr = address_parser(address_to_parse)
                 
                 # Address values
@@ -101,3 +101,4 @@ folder_id = get_folder(folder_name)
 upload_to_folder(real_folder_id=folder_id, \
                  file_name=file_name, \
                  file_type="text/csv")
+print('')
