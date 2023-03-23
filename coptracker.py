@@ -11,6 +11,9 @@ from drive_upload import *
 from booking_folder_maker import *
 from address_parse import *
 import csv
+import psycopg2
+import os
+import datetime
 
 
 today = date.today()
@@ -25,6 +28,57 @@ chrome_options.add_argument("--no-sandbox")
 driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', \
                           options=chrome_options)
 print('webdriver loaded')
+
+# Connect to DB
+conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+cur = conn.cursor()
+queries = []
+
+def get_query_string(date, name, address, street_address, city, zipcode, age, agency, charges):
+    if not date:
+        date = 'NULL'
+    if not name:
+        name = 'NULL'
+    if not address:
+        address = 'NULL'
+    if not street_address:
+        street_address = 'NULL'
+    if not city:
+        city = 'NULL'
+    if not zipcode:
+        zipcode = 'NULL'
+    if not age:
+        age = 'NULL'
+    if not agency:
+        agency = 'NULL'
+    if not charges:
+        charges = 'NULL'
+    
+    name = name.replace("'", "''")
+    address = address.replace("'", "''")
+    street_address = street_address.replace("'", "''")
+    city = city.replace("'", "''")
+    agency = agency.replace("'", "''")
+    charges = charges.replace("'", "''")
+    
+    query_string = ("""INSERT INTO bookings
+(date, name, address, street_address, city, zipcode, age_at_arrest, arresting_agency, charges)
+VALUES(
+'{}',
+'{}',
+'{}',
+'{}',
+'{}',
+{},
+{},
+'{}',
+'{}');""".format(date, name, address, street_address, city, zipcode, age, agency, charges))
+    new_string = query_string.replace("'NULL'", "NULL")
+    return(new_string)
+
+def execute_queries(queries):
+    for query in queries:
+        cur.execute(query)
 
 # Scrapes the previous day's booking table, returns csv name.
 def table_scrape():
@@ -69,6 +123,8 @@ def table_scrape():
                 if len(zip_arr[1]) == 0:
                     address_to_parse = address + ' TN'
                 street_addr_arr = address_parser(address_to_parse)
+                if ''.join(street_addr_arr) == "TN":
+                    street_addr_arr = ["Address not listed", "", ""]
                 
                 # Address values
                 street_addr = street_addr_arr[0]
@@ -88,12 +144,21 @@ def table_scrape():
                 wr.writerow({'Name': name, 'Address': address, 'Street Address': street_addr,
                              'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
                              'Arresting Agency': agency, 'Charges': charges})
+                
+                # Write row to db
+                query = get_query_string(datetime.datetime.strptime(yesterdayString, '%b-%d-%Y').strftime('%m/%d/%Y'),\
+                                 name, address, street_addr, city, zipcode, age, agency, charges)
+                queries.append(query)
        
     print('Done')
     driver.quit()
     return yesterdayString + '.csv'
 
 file_name = table_scrape()
+execute_queries(queries)
+
+# Commit to DB
+conn.commit()
 
 # If folder exists and is in the 'Bookings' folder, upload file to folder
 # else create folder in the 'Bookings' folder and upload file to folder

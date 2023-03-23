@@ -103,4 +103,4 @@ def upload_all(file_array):
 # Scrape table, create files
 booking_files = scrape_all_tables()
 # Upload all files to Drive
-upload_all(booking_files)
+#upload_all(booking_files)
