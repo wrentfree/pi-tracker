@@ -80,6 +80,23 @@ def execute_queries(queries):
     for query in queries:
         cur.execute(query)
 
+
+def write_to_local_db(queries):
+    conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+    cur = conn.cursor()
+    execute_queries(queries)
+    conn.commit()
+    conn.close()
+    cur.close()
+
+def write_to_heroku_db(queries):
+    conn = psycopg2.connect('host=ec2-44-213-151-75.compute-1.amazonaws.com user=ehzrohbdkkzvno password=2d510648de5837e946151984d4abfa9264a9ab35f075276d66cf3a18f1b02d74 dbname=d2c3huobn2rnjq')
+    cur = conn.cursor()
+    execute_queries(queries)
+    conn.commit()
+    conn.close()
+    cur.close()
+
 # Scrapes the previous day's booking table, returns csv name.
 def table_scrape():
     # Navigate to target website
@@ -158,7 +175,15 @@ file_name = table_scrape()
 execute_queries(queries)
 
 # Commit to DB
-conn.commit()
+try:
+    write_to_local_db(queries)
+except:
+    print('failed to write to local db')
+
+try:
+    write_to_heroku_db(queries)
+except:
+    print('failed to write to heroku db')
 
 # If folder exists and is in the 'Bookings' folder, upload file to folder
 # else create folder in the 'Bookings' folder and upload file to folder
