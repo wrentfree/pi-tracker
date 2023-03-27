@@ -15,7 +15,6 @@ import psycopg2
 import os
 import datetime
 
-
 today = date.today()
 today_string = today.strftime('%b-%d-%Y')
 print(today_string + ' Starting ...')
@@ -28,6 +27,28 @@ chrome_options.add_argument("--no-sandbox")
 driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', \
                           options=chrome_options)
 print('webdriver loaded')
+
+def check_dates(dates=[]):
+    env_dates = []
+    if os.getenv('DATES') == ['all']:
+         env_dates = 'all'
+    elif os.getenv('DATES'):
+        env_dates = os.getenv('DATES').split(',')
+        format_dates = []
+        for date_info in env_dates:
+            format_dates.append(datetime.datetime.strptime(date_info, '%m/%d/%Y'))
+        env_dates = format_dates
+    elif len(dates) > 0:
+        format_dates = []
+        for date_info in dates:
+            if type(date_info) is str:
+                format_dates.append(datetime.datetime.strptime(date_info, '%m/%d/%Y'))
+            elif type(date_info) is datetime.datetime:
+                format_dates.append(date_info)
+        env_dates = format_dates
+    else:
+        env_dates = [today]
+    return env_dates
 
 def get_query_string(date, name, address, street_address, city, zipcode, age, agency, charges):
     if not date:
@@ -105,80 +126,108 @@ def heroku_test():
     cur = conn.cursor()
     cur.execute('SELECT * FROM bookings ORDER BY date DESC LIMIT 10;')
 
+def format_dates(dates):
+    dates_info = []
+    
+    if dates == 'all':
+        i = 29
+        while i >= 0:
+            date_info = today - timedelta(days = i)
+            dates_info.append({'date_info': date_info,
+                                'url': 'http://www.hcsheriff.gov/cor/display.php?day=' + str(i),
+                                'csv': date_info.strftime('%b-%d-%Y') + '.csv'})
+            i = i-1
+    else:
+        for date_info in dates:
+            today_dt = datetime.datetime.combine(today, datetime.datetime.min.time())
+            date_dt = datetime.datetime.combine(date_info, datetime.datetime.min.time())
+            url_num = (today_dt - date_dt).days
+            dates_info.append({'date_info': date_info,
+                               'url': 'http://www.hcsheriff.gov/cor/display.php?day=' + str(url_num),
+                               'csv': date_info.strftime('%b-%d-%Y') + '.csv'})
+   
+    return dates_info
+    
+    
+
 # Scrapes the previous day's booking table, returns csv name.
-def table_scrape():
+def table_scrape(dates=[]):
     query_list = []
-    # Navigate to target website
-    driver.get('http://www.hcsheriff.gov/cor/display.php?day=2')
-
-    table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
-
-    # Use yesterday's date as the title of the csv
-    yesterday = today - timedelta(days = 2)
-    yesterdayString = yesterday.strftime('%b-%d-%Y')
-
-    # Writes the table to a csv named after yesterday's date
-    with open(yesterdayString + '.csv', 'w', newline='') as csvfile:
-        fieldnames = ['Name', 'Address', 'Street Address', 'City', 'Zipcode',
-                      'Age at Arrest', 'Arresting Agency', 'Charges']
-        wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        wr.writeheader()
+    csv_list = []
+    dates = check_dates(dates)
+    dates_info = format_dates(dates)
+    for info in dates_info:
+        date_info = info['date_info']
+        url = info['url']
+        csv_title = info['csv']
+        csv_list.append(csv_title)
+        print('Scraping ' + csv_title)
         
-        # parses the rows
-        for row in table.find_elements(By.CSS_SELECTOR, 'tr'):
-            rowtext = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'td')]
-            rowtextarr = rowtext[0].split('\n')
+        driver.get(url)
+        table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
+        
+        # Writes the table to a csv named after yesterday's date
+        with open(csv_title, 'w', newline='') as csvfile:
+            fieldnames = ['Name', 'Address', 'Street Address', 'City', 'Zipcode',
+                          'Age at Arrest', 'Arresting Agency', 'Charges']
+            wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            wr.writeheader()
             
-            # Collects the list of charges
-            ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
-            
-            
-            if 'Booking Report Date' in rowtextarr[0]:
-                continue
-            else:
-                # Format charges
-                charges = ch[0].replace('\n', ', ')
+            # parses the rows
+            for row in table.find_elements(By.CSS_SELECTOR, 'tr'):
+                rowtext = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'td')]
+                rowtextarr = rowtext[0].split('\n')
                 
-                # Format address
-                address = rowtextarr[1].strip()
-                zip_arr = zip_coder(address)
-                # Add state to address to improve parsing
-                space_index = address.rfind(' ')
-                address_to_parse = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
-                # Add state even if zip code is missing to help with parsing
-                if len(zip_arr[1]) == 0:
-                    address_to_parse = address + ' TN'
-                street_addr_arr = address_parser(address_to_parse)
-                if ''.join(street_addr_arr) == "TN":
-                    street_addr_arr = ["Address not listed", "", ""]
+                # Collects the list of charges
+                ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
                 
-                # Address values
-                street_addr = street_addr_arr[0]
-                city = zip_arr[0]
-                zipcode = zip_arr[1]
                 
-                # Backup values if zipcode parser fails due to bad zip code
-                if len(city) == 0:
-                    city = street_addr_arr[1]
-                
-                # Format all other info
-                name = rowtextarr[0]
-                age = rowtextarr[2][15:17]
-                agency = rowtextarr[3][18:]
-                
-                # Write row in csv file
-                wr.writerow({'Name': name, 'Address': address, 'Street Address': street_addr,
-                             'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
-                             'Arresting Agency': agency, 'Charges': charges})
-                
-                # Write row to db
-                query = get_query_string(datetime.datetime.strptime(yesterdayString, '%b-%d-%Y').strftime('%m/%d/%Y'),\
-                                 name, address, street_addr, city, zipcode, age, agency, charges)
-                query_list.append(query)
+                if 'Booking Report Date' in rowtextarr[0]:
+                    continue
+                else:
+                    # Format charges
+                    charges = ch[0].replace('\n', ', ')
+                    
+                    # Format address
+                    address = rowtextarr[1].strip()
+                    zip_arr = zip_coder(address)
+                    # Add state to address to improve parsing
+                    space_index = address.rfind(' ')
+                    address_to_parse = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
+                    # Add state even if zip code is missing to help with parsing
+                    if len(zip_arr[1]) == 0:
+                        address_to_parse = address + ' TN'
+                    street_addr_arr = address_parser(address_to_parse)
+                    if ''.join(street_addr_arr) == "TN":
+                        street_addr_arr = ["Address not listed", "", ""]
+                    
+                    # Address values
+                    street_addr = street_addr_arr[0]
+                    city = zip_arr[0]
+                    zipcode = zip_arr[1]
+                    
+                    # Backup values if zipcode parser fails due to bad zip code
+                    if len(city) == 0:
+                        city = street_addr_arr[1]
+                    
+                    # Format all other info
+                    name = rowtextarr[0]
+                    age = rowtextarr[2][15:17]
+                    agency = rowtextarr[3][18:]
+                    
+                    # Write row in csv file
+                    wr.writerow({'Name': name, 'Address': address, 'Street Address': street_addr,
+                                 'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
+                                 'Arresting Agency': agency, 'Charges': charges})
+                    
+                    # Write row to db
+                    query = get_query_string(date_info.strftime('%m/%d/%Y'),\
+                                     name, address, street_addr, city, zipcode, age, agency, charges)
+                    query_list.append(query)
        
     print('Done')
     driver.quit()
-    return {'csv_title': yesterdayString + '.csv', 'queries': query_list}
+    return {'queries': query_list, 'dates_info': dates_info}
 
 """
 results = table_scrape()

@@ -7,13 +7,9 @@ from drive_create_folder import *
 booking_id = '1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND'
 
 
-# Create Folder name
-folder_month = (date.today() - timedelta(days=2)).strftime('%b-%Y')
-folder_name = 'Bookings ' + folder_month
-
-
 # Search for folder by name. If it does not exist in the Bookings folder, create it.
 # Returns folder id.
+# Format for bookings: 'Bookings %b-%Y'
 def get_folder(folder_name):
     files = search_file(query="name='" + folder_name + "'")
     if len(files) > 0:
