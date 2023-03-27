@@ -29,11 +29,6 @@ driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', \
                           options=chrome_options)
 print('webdriver loaded')
 
-# Connect to DB
-conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
-cur = conn.cursor()
-queries = []
-
 def get_query_string(date, name, address, street_address, city, zipcode, age, agency, charges):
     if not date:
         date = 'NULL'
@@ -76,29 +71,43 @@ VALUES(
     new_string = query_string.replace("'NULL'", "NULL")
     return(new_string)
 
-def execute_queries(queries):
+def execute_queries(queries, db, conn, cur):
     for query in queries:
-        cur.execute(query)
+        try:
+            cur.execute(query)
+        except psycopg2.errors.InFailedSqlTransaction:
+            print(db + ' transaction rolled back')
+            print(query)
+            conn.rollback()
+        except Exception as e:
+            print(db + ' query failed')
+            print(query)
+            print(type(e))
+            print(e)
+        else:
+            conn.commit()
 
+def write_to_local_db(queries, conn, cur):
+    # conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+    # cur = conn.cursor()
+    execute_queries(queries, 'local', conn, cur)
+    conn.close()
 
-def write_to_local_db(queries):
-    conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
-    cur = conn.cursor()
-    execute_queries(queries)
-    conn.commit()
+def write_to_heroku_db(queries, conn, cur):
+    # conn = psycopg2.connect('host=ec2-44-213-151-75.compute-1.amazonaws.com user=ehzrohbdkkzvno password=2d510648de5837e946151984d4abfa9264a9ab35f075276d66cf3a18f1b02d74 dbname=d2c3huobn2rnjq')
+    # cur = conn.cursor()
+    execute_queries(queries, 'heroku', conn, cur)
     conn.close()
     cur.close()
 
-def write_to_heroku_db(queries):
+def heroku_test():
     conn = psycopg2.connect('host=ec2-44-213-151-75.compute-1.amazonaws.com user=ehzrohbdkkzvno password=2d510648de5837e946151984d4abfa9264a9ab35f075276d66cf3a18f1b02d74 dbname=d2c3huobn2rnjq')
     cur = conn.cursor()
-    execute_queries(queries)
-    conn.commit()
-    conn.close()
-    cur.close()
+    cur.execute('SELECT * FROM bookings ORDER BY date DESC LIMIT 10;')
 
 # Scrapes the previous day's booking table, returns csv name.
 def table_scrape():
+    query_list = []
     # Navigate to target website
     driver.get('http://www.hcsheriff.gov/cor/display.php?day=2')
 
@@ -165,25 +174,32 @@ def table_scrape():
                 # Write row to db
                 query = get_query_string(datetime.datetime.strptime(yesterdayString, '%b-%d-%Y').strftime('%m/%d/%Y'),\
                                  name, address, street_addr, city, zipcode, age, agency, charges)
-                queries.append(query)
+                query_list.append(query)
        
     print('Done')
     driver.quit()
-    return yesterdayString + '.csv'
+    return {'csv_title': yesterdayString + '.csv', 'queries': query_list}
 
-file_name = table_scrape()
-execute_queries(queries)
+"""
+results = table_scrape()
+file_name = results['csv_title']
+queries = results['queries']
 
 # Commit to DB
-try:
-    write_to_local_db(queries)
-except:
-    print('failed to write to local db')
+
 
 try:
-    write_to_heroku_db(queries)
-except:
-    print('failed to write to heroku db')
+    write_to_local_db(queries)
+except Exception as e:
+    print('failed to write to local db')
+    print(e)
+else:
+    print('Written to local db')
+
+
+#heroku_test()
+write_to_heroku_db(queries)
+        
 
 # If folder exists and is in the 'Bookings' folder, upload file to folder
 # else create folder in the 'Bookings' folder and upload file to folder
@@ -191,4 +207,4 @@ folder_id = get_folder(folder_name)
 upload_to_folder(real_folder_id=folder_id, \
                  file_name=file_name, \
                  file_type="text/csv")
-print('')
+"""
