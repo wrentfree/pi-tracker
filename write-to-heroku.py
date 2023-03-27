@@ -18,7 +18,7 @@ results = table_scrape(env_dates)
 execute_queries(results['queries'], 'heroku', conn, cur)
 print('\nEntries written to heroku')
 
-if os.getenv('SCHEDULE').lower() == 'true':
+if os.getenv('SCHEDULE'):
 	conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
 	cur = conn.cursor()
 	query = "UPDATE schedule SET heroku_success = TRUE WHERE date = '{}';".format(today.strftime('%m/%d/%Y'))
