@@ -5,6 +5,10 @@ from pyvirtualdisplay import Display
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait as Wait
+from selenium.webdriver.support import expected_conditions as EC
+from PIL import Image
+from Screenshot import Screenshot
 from datetime import date
 from datetime import timedelta
 from drive_upload import *
@@ -17,13 +21,17 @@ import datetime
 
 today = date.today()
 today_string = today.strftime('%b-%d-%Y')
+screenshot_string = today.strftime('%b-%d-%Y %H:%M:%S') + '.png'
 print(today_string + ' Starting ...')
+ob = Screenshot.Screenshot()
 display = Display(visible=0, size=(1600, 1200))
 display.start()
 chrome_options = Options()
 chrome_options.add_argument("--disable-extensions")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--ignore-ssl-errors=yes")
+chrome_options.add_argument("--ignore-certificate-errors")
 driver = webdriver.Chrome('/usr/lib/chromium-browser/chromedriver', \
                           options=chrome_options)
 print('webdriver loaded')
@@ -163,8 +171,14 @@ def table_scrape(dates=[]):
         csv_list.append(csv_title)
         print('Scraping ' + csv_title)
         
-        driver.get(url)
-        table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
+        try:
+            driver.get(url)
+            Wait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, 'booking_reports_list')))
+            table = driver.find_element(By.CLASS_NAME, 'booking_reports_list')
+        except Exception as e:
+            file_name = today_string
+            ob.full_Screenshot(driver, save_path=r'./screenshots', image_name=screenshot_string)
+            raise e
         
         # Writes the table to a csv named after yesterday's date
         with open(csv_title, 'w', newline='') as csvfile:
