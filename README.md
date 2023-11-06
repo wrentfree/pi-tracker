@@ -10,10 +10,14 @@ Other dependencies:
 sudo apt-get install xvfb
 sudo pip install PyVirtualDisplay
 sudo pip install xvfbwrapper
+sudo pip install psycopg2
+sudo pip install psycopg2
 ```
+Pillow, usaddress, uszipcode are additional libraries used, but I am unsure
+if I used pip.
 
 ## Scripts
 
-`coptracker.py` is the script that runs daily that scrapes the Hamilton County Sheriff's Office booking table from the previous day and saves it as a csv.
-
-`coptracker_backlog.py` will cycle through all available tables except the previous day's.
+The script that runs daily is  `index.py`.
+It will query the schedule PSQL table to find all dates with missing uploads
+and will itterate through the dates to ensure every db has complete data.

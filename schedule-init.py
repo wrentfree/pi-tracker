@@ -2,12 +2,13 @@ import csv
 import psycopg2
 import os
 import datetime
-from datetime import date
+from datetime import date, timedelta
 
 conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
 cur = conn.cursor()
 
-today_string = date.today().strftime('%m/%d/%Y')
+#Changed to show the actual day being tracked
+today_string = (date.today() - timedelta(days=2)).strftime('%m/%d/%Y')
 query = "SELECT COUNT(*) FROM schedule WHERE date='{}'".format(today_string)
 
 cur.execute(query)
