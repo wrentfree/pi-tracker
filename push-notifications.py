@@ -1,7 +1,7 @@
 import psycopg2
 import os
 import datetime
-from datetime import date
+from datetime import date, timedelta
 from pushbullet import Pushbullet
 
 # Script to send push notification if there are any failures
@@ -14,7 +14,7 @@ pb = Pushbullet('o.CL45Xw9qtRCMmYiNzjLXxb7mjMVZUdg8')
 conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
 cur = conn.cursor()
 
-today_string = date.today().strftime('%m/%d/%Y')
+today_string = (date.today()-timedelta(days=2)).strftime('%m/%d/%Y')
 query = "SELECT local_success,heroku_success,drive_success FROM schedule WHERE date='{}'".format(today_string)
 
 cur.execute(query)
@@ -24,7 +24,7 @@ response = cur.fetchone()
 response_str = ', '.join(map(str, response)).lower()
 response_arr = response_str.split(', ')
 
-push_str = ''
+push_str = "Results for {}\n".format(today_string)
 
 # Local
 if response_arr[0] == 'true':
