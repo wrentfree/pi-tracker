@@ -159,7 +159,7 @@ def format_dates(dates):
     
 
 # Scrapes the previous day's booking table, returns csv name.
-def table_scrape(dates=[]):
+def table_scrape(dates):
     query_list = []
     csv_list = []
     dates = check_dates(dates)
@@ -242,6 +242,7 @@ def table_scrape(dates=[]):
     print('Done')
     driver.quit()
     return {'queries': query_list, 'dates_info': dates_info}
+
 
 """
 results = table_scrape()

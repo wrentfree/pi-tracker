@@ -11,7 +11,6 @@ sudo apt-get install xvfb
 sudo pip install PyVirtualDisplay
 sudo pip install xvfbwrapper
 sudo pip install psycopg2
-sudo pip install psycopg2
 ```
 Pillow, usaddress, uszipcode are additional libraries used, but I am unsure
 if I used pip.
