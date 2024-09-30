@@ -4,7 +4,7 @@ import datetime
 from coptracker import execute_queries
 
 def write_to_heroku(booking_dates, results):
-	conn = psycopg2.connect('host=ec2-44-213-151-75.compute-1.amazonaws.com user=ehzrohbdkkzvno password=2d510648de5837e946151984d4abfa9264a9ab35f075276d66cf3a18f1b02d74 dbname=d2c3huobn2rnjq')
+	conn = psycopg2.connect('postgres://ue99m6v4vbias0:pf653a3a598a4ef4d4d29c5758550a6a83f01b11185b16bf9643f8cbd0eba9da6@c8gfccabfmhkij.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dd8pufhjmc8q7j')
 	cur = conn.cursor()
 
 	execute_queries(results['queries'], 'heroku', conn, cur)
