@@ -28,7 +28,7 @@ if date_arr:
 	results = table_scrape(date_arr)
 	print(results)
 
-	write_to_local(date_arr, copy.deepcopy(results))
-	write_to_heroku(date_arr, copy.deepcopy(results))
-	write_to_drive(date_arr, copy.deepcopy(results))
+	#write_to_local(date_arr, copy.deepcopy(results))
+	#write_to_heroku(date_arr, copy.deepcopy(results))
+	#write_to_drive(date_arr, copy.deepcopy(results))
 
