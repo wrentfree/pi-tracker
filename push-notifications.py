@@ -3,15 +3,24 @@ import os
 import datetime
 from datetime import date, timedelta
 from pushbullet import Pushbullet
+import json
+
+pushbullet_id = ''
+connection_string = ''
+
+with open('config.json') as f:
+    json_data = json.load(f)
+    connection_string = json_data['localPostgres']
+	pushbullet_id = json_data['pushbullet']
 
 # Script to send push notification if there are any failures
-pb = Pushbullet('o.CL45Xw9qtRCMmYiNzjLXxb7mjMVZUdg8')
+pb = Pushbullet(pushbullet_id)
 
 # push = pb.push_note("Test", 'Does this show up on my phone?')
 
 # Verifiy successes from schedule table
 
-conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+conn = psycopg2.connect(connection_string)
 cur = conn.cursor()
 
 today_string = (date.today()-timedelta(days=2)).strftime('%m/%d/%Y')

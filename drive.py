@@ -1,6 +1,13 @@
-from coptracker import *
+from bookings_tracker import *
 import datetime
 import os
+import json
+
+connection_string = ''
+
+with open('config.json') as f:
+    json_data = json.load(f)
+    connection_string = json_data['localPostgres']
 
 def write_to_drive(booking_dates, results):
 	# If folder exists and is in the 'Bookings' folder, upload file to folder
@@ -15,7 +22,7 @@ def write_to_drive(booking_dates, results):
 		file_name = day_info['csv']
 		upload_to_folder(real_folder_id=folder_id, file_name=file_name, file_type="text/csv")
 
-	conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+	conn = psycopg2.connect(connection_string)
 	cur = conn.cursor()
 	for d in booking_dates:
 		query = "UPDATE schedule SET drive_success = TRUE WHERE date = '{}';".format(d)

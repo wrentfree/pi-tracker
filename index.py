@@ -1,7 +1,7 @@
 import os
 import datetime
 import copy
-from coptracker import table_scrape
+from bookings_tracker import table_scrape
 from local import write_to_local
 from heroku import write_to_heroku
 from drive import write_to_drive

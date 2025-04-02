@@ -5,13 +5,10 @@ import re
 def zip_tester(zipcode):
     search = SearchEngine()
     zipcode_info = search.by_zipcode(zipcode)
-    print(zipcode_info.to_dict())
+    # print(zipcode_info.to_dict())
 
 #Use zip code to get info; most reliable
-def zip_coder(address):
-    zipcode = address[address.rfind(' ') + 1:]
-    if len(zipcode) > 5:
-        zipcode = zipcode[:5]
+def zip_coder(zipcode):
     search = SearchEngine()
     zipcode_info = search.by_zipcode(zipcode)
     try:
@@ -28,12 +25,14 @@ def address_parser(address):
     address = address.replace(',', '')
     street_address = ''
     city = ''
+    state= ''
     if 'homeless' in address.lower():
         street_address = 'homeless'
         address = address.lower().replace('homeless', '')
     
     parsed_address = usaddress.parse(address)
     #print(parsed_address)
+    #print('')
     for addr_bit in parsed_address:
         tag = addr_bit[1]
         info = addr_bit[0]
@@ -45,7 +44,9 @@ def address_parser(address):
             street_address += info + ' '
         elif 'PlaceName' in tag:
             city += info + ' '
-    return [street_address.strip(), city.strip()]
+        elif 'StateName' in tag:
+            state = info
+    return [street_address.strip().upper(), city.strip().upper(), state.upper()]
 
 #print(address_parser('HOMELESS CHATTANOOGA, TN 37416'))
 #print(zip_coder(address='201 E ST CHATTANOOGA, 37423'))

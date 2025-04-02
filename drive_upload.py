@@ -43,6 +43,6 @@ def upload_to_folder(real_folder_id, file_name, file_type):
 
 
 if __name__ == '__main__':
-    upload_to_folder(real_folder_id='1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND', \
+    upload_to_folder(real_folder_id='', \
                      file_name="Oct-09-2022.csv", \
                      file_type="text/csv")
