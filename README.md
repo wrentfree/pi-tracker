@@ -21,7 +21,7 @@ libraries are missing.
 
 ### Google API
 
-You will need to follow Google's Developer instructions if you would like to create copies of the reports in your drive by copying the `token.json.example` and `credentials.json.example` files and filling in your personal information there.
+You will need to follow Google's Developer instructions if you would like to create copies of the reports in your drive by copying the `token.json.example` file and filling in your personal information there.
 
 ### Postgres
 If you would like to record the information in a PostgreSQL database, you will need to set them up yourself, then fill the information into a copy of the `config.json.example` file. I have not yet created a script for the intial creation of the relative tables.
