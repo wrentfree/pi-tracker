@@ -8,7 +8,7 @@ connection_string = ''
 
 with open('config.json') as f:
     json_data = json.load(f)
-    connection_string = json_data['localPostrgres']
+    connection_string = json_data['localPostgres']
 
 
 def write_to_local(booking_dates, results):

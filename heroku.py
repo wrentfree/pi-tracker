@@ -9,8 +9,8 @@ local_string = ''
 
 with open('config.json') as f:
     json_data = json.load(f)
-    remote_string = json_data['remotePostrgres']
-	local_string = json_data['localPostgres']
+    remote_string = json_data['remotePostgres']
+    local_string = json_data['localPostgres']
 
 def write_to_heroku(booking_dates, results):
 	conn = psycopg2.connect(remote_string)
