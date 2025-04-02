@@ -3,8 +3,15 @@ import psycopg2
 import os
 import datetime
 from datetime import date, timedelta
+import json
 
-conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+connection_string = ''
+
+with open('config.json') as f:
+    json_data = json.load(f)
+    connection_string = json_data['localPostrgres']
+
+conn = psycopg2.connect(connection_string)
 cur = conn.cursor()
 
 #Changed to show the actual day being tracked

@@ -35,7 +35,3 @@ def create_folder(folder_name, parent_id):
         file = None
 
     return file.get('id')
-
-
-if __name__ == '__main__':
-    create_folder(folder_name='Booking-Test', parent_id='1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND')

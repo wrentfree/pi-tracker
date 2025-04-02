@@ -1,0 +1,1 @@
+{"token": "token string here", "refresh_token": "refresh token here", "token_uri": "https://oauth2.googleapis.com/token", "client_id": "client id here", "client_secret": "client secret here", "scopes": ["https://www.googleapis.com/auth/drive"], "expiry": "2022-10-10T18:13:55.606497Z"}

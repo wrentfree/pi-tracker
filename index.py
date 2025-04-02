@@ -1,7 +1,7 @@
 import os
 import datetime
 import copy
-from coptracker import table_scrape
+from bookings_tracker import table_scrape
 from local import write_to_local
 from heroku import write_to_heroku
 from drive import write_to_drive
@@ -28,7 +28,7 @@ if date_arr:
 	results = table_scrape(date_arr)
 	print(results)
 
-	#write_to_local(date_arr, copy.deepcopy(results))
-	#write_to_heroku(date_arr, copy.deepcopy(results))
-	#write_to_drive(date_arr, copy.deepcopy(results))
+	write_to_local(date_arr, copy.deepcopy(results))
+	write_to_heroku(date_arr, copy.deepcopy(results))
+	write_to_drive(date_arr, copy.deepcopy(results))
 

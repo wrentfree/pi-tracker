@@ -1,9 +1,19 @@
+# This file is used for migrating data from csv files to Postgres dbs, used once near the beginning of the project once dbs were implemented.
+
 import datetime
 import psycopg2
 import csv
 import os
+import json
 
-conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+connection_string = ''
+directory = '/home/wren/Desktop/Bookings/Bookings Mar-2023'
+
+with open('config.json') as f:
+    json_data = json.load(f)
+    connection_string = json_data['localPostrgres']
+
+conn = psycopg2.connect(connection_string)
 cur = conn.cursor()
 
 # Import data from csv
@@ -102,7 +112,7 @@ def query_table():
     for response in responses:
         print(response)
 
-data = get_all_files('/home/wren/Desktop/Bookings/Bookings Mar-2023')
+data = get_all_files(directory)
 queries = create_queries(data)
 execute_queries(queries)
 query_table()

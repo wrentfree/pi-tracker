@@ -1,16 +1,25 @@
 import psycopg2
 import os
 import datetime
-from coptracker import execute_queries
+from bookings_tracker import execute_queries
+import json
+
+remote_string = ''
+local_string = ''
+
+with open('config.json') as f:
+    json_data = json.load(f)
+    remote_string = json_data['remotePostrgres']
+	local_string = json_data['localPostgres']
 
 def write_to_heroku(booking_dates, results):
-	conn = psycopg2.connect('postgres://ue99m6v4vbias0:pf653a3a598a4ef4d4d29c5758550a6a83f01b11185b16bf9643f8cbd0eba9da6@c8gfccabfmhkij.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/dd8pufhjmc8q7j')
+	conn = psycopg2.connect(remote_string)
 	cur = conn.cursor()
 
 	execute_queries(results['queries'], 'heroku', conn, cur)
 	print('\nEntries written to heroku')
 
-	conn = psycopg2.connect('host=192.168.68.59 user=postgres password=Postgress dbname=bookings')
+	conn = psycopg2.connect(local_string)
 	cur = conn.cursor()
 	for d in booking_dates:
 		print(d)

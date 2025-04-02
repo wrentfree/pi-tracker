@@ -56,5 +56,5 @@ def is_in_folder(parent_id, child_id):
 
 if __name__ == '__main__':
     print(search_file(query="name='Oct-07-2022.csv'"))
-    print(is_in_folder(parent_id='1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND',
-                 child_id='1uWgExsYQWrtMe5GHSbfPpCMBnezYF0Yp'))
+    print(is_in_folder(parent_id='',
+                 child_id=''))

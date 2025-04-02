@@ -3,9 +3,13 @@ from datetime import timedelta
 from drive_upload import *
 from drive_file_search import *
 from drive_create_folder import *
+import json
 
-booking_id = '1z_QtU4t1iaAOowzpQPfyv2iKEGnKh9ND'
+booking_id = ''
 
+with open('config.json') as f:
+    json_data = json.load(f)
+    booking_id = json_data['driveFolderId']
 
 # Search for folder by name. If it does not exist in the Bookings folder, create it.
 # Returns folder id.
