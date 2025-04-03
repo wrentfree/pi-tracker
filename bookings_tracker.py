@@ -159,13 +159,6 @@ def table_scrape(dates):
 
         # Needs to be converted to parse API response
         # parses the rows
-        """
-        {"R_ID":"CA1A324A-ADFC-4024-BD9B-10A74A9DF36D","Verified":0,"Name":"PRITCHETT,BRANDI ANN",
-        "AddressStreet":"9221 BIRCHWOOD PIKE","AddressCity":"HARRISON","AddressZip":"37363",
-        "HML_AGE_AT_ARREST":33,"HML_ARREST_AGENCY":"HC Sheriff","HML_COMMITTAL_DATE":"2025-04-01T00:00:00.000Z",
-        "HML_COMMITTAL_TIME":"3 :35","DT_Created":"2025-04-01T10:08:56.740Z",
-        "PrtOffense1":"VIOLATION OF PROBATION  (DOMESTIC ASSAULT)","PrtOffense2":"","PrtOffense3":"
-        """
         # Writes the table to a csv named after yesterday's date
         with open(csv_title, 'w', newline='') as csvfile:
             fieldnames = ['Name', 'Address', 'Street Address', 'City', 'Zipcode',

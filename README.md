@@ -2,7 +2,7 @@
 A webscraper project created for CALEB, a Chattanooga nonprofit, for the purpose of obtaining and retaining publicly available booking
 data for the purpose of critical data analysis of the people and areas most affected by police in Hamilton County.
 
-You can find the reports [here](https://www.calebcha.org/pretrial-report.html).
+You can find the reports on CALEB's [website](https://www.calebcha.org/pretrial-report.html) and local news coverage [here](https://www.wdef.com/report-says-most-hamilton-county-inmates-stay-behind-bars-through-the-end-of-their-case/).
 
 ## Configuration
 
