@@ -156,6 +156,70 @@ def table_scrape(dates):
         except Exception as e:
             print('Issue making api request')
             raise e
+
+        # Needs to be converted to parse API response
+        # parses the rows
+        try:
+            json_data = json.loads(data)
+            rows = table.find_elements(By.CSS_SELECTOR, 'li')
+            if len(rows) == 0:
+                raise('No rows found')
+            for row in rows:
+                rowtext = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'div')]
+                print('entries')
+                print(rowtext)
+                rowtextarr = rowtext[0].split('\n')
+                
+                # Collects the list of charges
+                ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
+                
+                
+                if 'Booking Report Date' in rowtextarr[0]:
+                    continue
+                else:
+                    # Format charges
+                    charges = ch[0].replace('\n', ', ')
+                    
+                    # Format address
+                    address = rowtextarr[1].strip()
+                    zip_arr = zip_coder(address)
+                    # Add state to address to improve parsing
+                    space_index = address.rfind(' ')
+                    address_to_parse = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
+                    # Add state even if zip code is missing to help with parsing
+                    if len(zip_arr[1]) == 0:
+                        address_to_parse = address + ' TN'
+                    street_addr_arr = address_parser(address_to_parse)
+                    if ''.join(street_addr_arr) == "TN":
+                        street_addr_arr = ["Address not listed", "", ""]
+                    
+                    # Address values
+                    street_addr = street_addr_arr[0]
+                    city = zip_arr[0]
+                    zipcode = zip_arr[1]
+                    
+                    # Backup values if zipcode parser fails due to bad zip code
+                    if len(city) == 0:
+                        city = street_addr_arr[1]
+                    
+                    # Format all other info
+                    name = rowtextarr[0]
+                    age = rowtextarr[2][15:17]
+                    agency = rowtextarr[3][18:]
+                    
+                    # Write row in csv file
+                    wr.writerow({'Name': name, 'Address': address, 'Street Address': street_addr,
+                                    'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
+                                    'Arresting Agency': agency, 'Charges': charges})
+                    
+                    # Write row to db
+                    query = get_query_string(date_info.strftime('%m/%d/%Y'),\
+                                        name, address, street_addr, city, zipcode, age, agency, charges)
+                    query_list.append(query)
+        except Exception as e:
+            print('Issue parsing addresses from table')
+            #driver.quit()
+            raise e     
             
         # Writes the table to a csv named after yesterday's date
         with open(csv_title, 'w', newline='') as csvfile:
