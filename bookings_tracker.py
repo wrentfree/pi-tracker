@@ -150,49 +150,67 @@ def table_scrape(dates):
               --data-raw '{}'""".format('{"date":"'+day+'"}'))
             ctx = uncurl.parse_context(curl_string)
             r = requests.request(ctx.method.upper(), ctx.url, data=ctx.data, cookies=ctx.cookies, headers=ctx.headers, auth=ctx.auth)
-            print(r)
+            # print(r)
             data = r.text
-            print(data)
+            #print(data)
         except Exception as e:
             print('Issue making api request')
             raise e
 
         # Needs to be converted to parse API response
         # parses the rows
-        try:
-            json_data = json.loads(data)
-            rows = table.find_elements(By.CSS_SELECTOR, 'li')
-            if len(rows) == 0:
-                raise('No rows found')
-            for row in rows:
-                rowtext = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'div')]
-                print('entries')
-                print(rowtext)
-                rowtextarr = rowtext[0].split('\n')
-                
-                # Collects the list of charges
-                ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
-                
-                
-                if 'Booking Report Date' in rowtextarr[0]:
-                    continue
-                else:
-                    # Format charges
-                    charges = ch[0].replace('\n', ', ')
+        """
+        {"R_ID":"CA1A324A-ADFC-4024-BD9B-10A74A9DF36D","Verified":0,"Name":"PRITCHETT,BRANDI ANN",
+        "AddressStreet":"9221 BIRCHWOOD PIKE","AddressCity":"HARRISON","AddressZip":"37363",
+        "HML_AGE_AT_ARREST":33,"HML_ARREST_AGENCY":"HC Sheriff","HML_COMMITTAL_DATE":"2025-04-01T00:00:00.000Z",
+        "HML_COMMITTAL_TIME":"3 :35","DT_Created":"2025-04-01T10:08:56.740Z",
+        "PrtOffense1":"VIOLATION OF PROBATION  (DOMESTIC ASSAULT)","PrtOffense2":"","PrtOffense3":"
+        """
+        # Writes the table to a csv named after yesterday's date
+        with open(csv_title, 'w', newline='') as csvfile:
+            fieldnames = ['Name', 'Address', 'Street Address', 'City', 'Zipcode',
+                          'Age at Arrest', 'Arresting Agency', 'Charges']
+            wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            wr.writeheader()
+            try:
+                json_data = json.loads(data)
+                if len(json_data['body']) == 0:
+                    raise('No rows found')
+                for row in json_data['body']:
+                    #print(row)
+                    # Collects the list of charges
+                    # ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
+                    charges = ''
+                    i = 1
+                    while i <= 48:
+                        key = 'PrtOffense' + str(i)
+                        if not row[key]:
+                            break
+                        if i == 1:
+                            charges = charges + row[key]
+                        else:
+                            charges = charges + ',' + row[key]
+                        i+=1
+                    #print(charges)
+                    
+                    
                     
                     # Format address
-                    address = rowtextarr[1].strip()
-                    zip_arr = zip_coder(address)
-                    # Add state to address to improve parsing
-                    space_index = address.rfind(' ')
-                    address_to_parse = address[:space_index] + ' ' + zip_arr[2] + address[space_index:]
-                    # Add state even if zip code is missing to help with parsing
-                    if len(zip_arr[1]) == 0:
-                        address_to_parse = address + ' TN'
-                    street_addr_arr = address_parser(address_to_parse)
-                    if ''.join(street_addr_arr) == "TN":
-                        street_addr_arr = ["Address not listed", "", ""]
+                    zip_arr = zip_coder(row['AddressZip'])
+                    #print(zip_arr)
                     
+                    # Add state even if zip code is missing to help with parsing
+                    street_addr = row['AddressStreet']
+                    city = row['AddressCity']
+                    zipcode = row['AddressZip']
+                    address = (street_addr + ' ' + city + ' ' + zipcode).strip()
+                    
+                    if not city:
+                        city = zipcoder(zipcode)[0]
+                    if 'homeless' in address.lower():
+                        street_addr = 'HOMELESS'
+                    
+                    """
                     # Address values
                     street_addr = street_addr_arr[0]
                     city = zip_arr[0]
@@ -201,11 +219,12 @@ def table_scrape(dates):
                     # Backup values if zipcode parser fails due to bad zip code
                     if len(city) == 0:
                         city = street_addr_arr[1]
+                    """
                     
                     # Format all other info
-                    name = rowtextarr[0]
-                    age = rowtextarr[2][15:17]
-                    agency = rowtextarr[3][18:]
+                    name = row['Name']
+                    age = row['HML_AGE_AT_ARREST']
+                    agency = row['HML_ARREST_AGENCY']
                     
                     # Write row in csv file
                     wr.writerow({'Name': name, 'Address': address, 'Street Address': street_addr,
@@ -216,17 +235,11 @@ def table_scrape(dates):
                     query = get_query_string(date_info.strftime('%m/%d/%Y'),\
                                         name, address, street_addr, city, zipcode, age, agency, charges)
                     query_list.append(query)
-        except Exception as e:
-            print('Issue parsing addresses from table')
-            #driver.quit()
-            raise e     
-            
-        # Writes the table to a csv named after yesterday's date
-        with open(csv_title, 'w', newline='') as csvfile:
-            fieldnames = ['Name', 'Address', 'Street Address', 'City', 'Zipcode',
-                          'Age at Arrest', 'Arresting Agency', 'Charges']
-            wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            wr.writeheader()
+            except Exception as e:
+                print('Issue parsing addresses from table')
+                #driver.quit()
+                raise e   
+
     print('Done')
     #driver.quit()
     return {'queries': query_list, 'dates_info': dates_info}

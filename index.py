@@ -26,7 +26,7 @@ else:
 print(date_arr)
 if date_arr:
 	results = table_scrape(date_arr)
-	print(results)
+	#print(results)
 
 	write_to_local(date_arr, copy.deepcopy(results))
 	write_to_heroku(date_arr, copy.deepcopy(results))
