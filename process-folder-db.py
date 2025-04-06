@@ -9,7 +9,7 @@ import json
 connection_string = ''
 directory = '/home/wren/Desktop/Bookings/Bookings Mar-2023'
 
-with open('config.json') as f:
+with open('/home/wren/Desktop/pi-tracker/pi-tracker/config.json') as f:
     json_data = json.load(f)
     connection_string = json_data['localPostgres']
 

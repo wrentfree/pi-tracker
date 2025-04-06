@@ -7,7 +7,7 @@ import json
 
 booking_id = ''
 
-with open('config.json') as f:
+with open('/home/wren/Desktop/pi-tracker/pi-tracker/config.json') as f:
     json_data = json.load(f)
     booking_id = json_data['driveFolderId']
 
