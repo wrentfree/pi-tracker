@@ -27,7 +27,7 @@ if last_date < date_to_be_processed:
 	    date_string = (date_to_be_processed - timedelta(missing_days)).strftime('%m/%d/%Y')
 	    create_query = "INSERT INTO schedule (date, drive_success, local_success, heroku_success) VALUES ('{}', FALSE, FALSE, FALSE)".format(date_string)
 	    print(create_query)
-	    #cur.execute(create_query)
+	    cur.execute(create_query)
 	    cur.execute("SELECT * FROM schedule ORDER BY date DESC")
 	    print(cur.fetchone())
 	    missing_days -= 1
