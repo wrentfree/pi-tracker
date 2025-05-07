@@ -22,9 +22,14 @@ def write_to_heroku(results):
 			execute_queries(date_info['queries'], 'heroku', conn, cur)
 			print('\nEntries written to heroku for ' + date_info['formatted_date'])
 			
+			# Update schedule on local
+			conn.close()
+			cur.close()
+			conn = psycopg2.connect(local_string)
+			cur = conn.cursor()
 			query = "UPDATE schedule SET heroku_success = TRUE WHERE date = '{}';".format(date_info['formatted_date'])
 			cur.execute(query)
-			#conn.commit()
+			conn.commit()
 	conn.close()
 	cur.close()
 

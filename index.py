@@ -33,7 +33,7 @@ if date_arr:
 	#             csv: csv title string,
 	#			  success: boolean for successful scrape for that date,
 	#			  queries: ["list of query strings"]}]
-	#write_to_local(copy.deepcopy(results))
-	#write_to_heroku(copy.deepcopy(results))
-	#write_to_drive(copy.deepcopy(results))
+	write_to_local(copy.deepcopy(results))
+	write_to_heroku(copy.deepcopy(results))
+	write_to_drive(copy.deepcopy(results))
 

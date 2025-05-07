@@ -14,18 +14,18 @@ def write_to_drive(results):
 	# else create folder in the 'Bookings' folder and upload file to folder
 	
 	conn = psycopg2.connect(connection_string)
+	conn.autocommit = True
 	cur = conn.cursor()
 	
 	for date_info in results:
 		if date_info['success']:
+			folder_id = get_folder('Bookings ' + date_info['date_info'].strftime('%b-%Y'))
+			file_name = date_info['csv']
+			upload_to_folder(real_folder_id=folder_id, file_name=file_name, file_type="text/csv")
 			
-		folder_id = get_folder('Bookings ' + date_info['date_info'].strftime('%b-%Y'))
-		file_name = date_info['csv']
-		upload_to_folder(real_folder_id=folder_id, file_name=file_name, file_type="text/csv")
-		
-		query = "UPDATE schedule SET drive_success = TRUE WHERE date = '{}';".format(date_info['formatted_date'])
-		cur.execute(query)
-		#conn.commit()
+			query = "UPDATE schedule SET drive_success = TRUE WHERE date = '{}';".format(date_info['formatted_date'])
+			cur.execute(query)
+			#conn.commit()
 	conn.close()
 	cur.close()
 	

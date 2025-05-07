@@ -106,8 +106,9 @@ def execute_queries(queries, db, conn, cur):
             print('')
             #conn.rollback()
         else:
-            #conn.commit()
+            conn.commit()
             #print('autocommited')
+
 
 def format_dates(dates):
     dates_info = []
@@ -115,8 +116,9 @@ def format_dates(dates):
         dates_info.append({ 'date_info': date_info,
                             'formatted_date': date_info.strftime('%Y-%m-%d'),
                             'csv': date_info.strftime('%b-%d-%Y') + '.csv',
-                            ,'success': True,'queries': []})
+                            'success': True,'queries': []})
     return dates_info
+                
 
 # Scrapes the previous day's booking table, returns csv name.
 # After website change, dates_info() now returns a dictionary of
@@ -229,7 +231,7 @@ def table_scrape(dates):
                 #Continue to next day
                 info['success'] = False
                 print(e)
-            finally
+            finally:
                 continue
 
     print('Done')
