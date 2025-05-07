@@ -27,8 +27,13 @@ print(date_arr)
 if date_arr:
 	results = table_scrape(date_arr)
 	#print(results)
-
-	write_to_local(date_arr, copy.deepcopy(results))
-	write_to_heroku(date_arr, copy.deepcopy(results))
-	write_to_drive(date_arr, copy.deepcopy(results))
+	
+	# results is [{date_info: Date object,
+	#			  formatted_date: date string,
+	#             csv: csv title string,
+	#			  success: boolean for successful scrape for that date,
+	#			  queries: ["list of query strings"]}]
+	#write_to_local(copy.deepcopy(results))
+	#write_to_heroku(copy.deepcopy(results))
+	#write_to_drive(copy.deepcopy(results))
 

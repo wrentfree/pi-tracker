@@ -31,6 +31,10 @@ If you would like updates pushed to your phone, you will have to configure the `
 
 ## Scripts
 
-The script that runs daily using crontab is  `index.py`.
-It will query the schedule PSQL table to find all dates with missing uploads
-and will itterate through the dates to ensure every db has complete data.
+Using crontab, I've created a series of executions that
+1. Run the 'schedule-init.py` file which creates a row in a PostgreSQL table for tracking script completion successes.
+2. Run the `index.py` file containing the scripts to be run and updates the script completion table.
+3. Run `index.py` again in case there were any failures listed in the script completion table.
+4. Run `push-notification.py` which queries the script completion table and sends me a push notification on my phone reporting script success or failure.
+
+It's important to note that `index.py` will not function properly without first running `schedule-init.py`
