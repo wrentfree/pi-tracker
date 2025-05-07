@@ -36,4 +36,9 @@ if date_arr:
 	write_to_local(copy.deepcopy(results))
 	write_to_heroku(copy.deepcopy(results))
 	write_to_drive(copy.deepcopy(results))
+	failed_dates = []
+	for result in results:
+		if not result['success']:
+			failed_dates.append(result['formatted_date'])
+	print('Scraping failed for ' + ', '.join(failed_dates))
 
