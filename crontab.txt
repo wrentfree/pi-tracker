@@ -1,5 +1,5 @@
 # Initialize scheduler
-45 0 * * * /bin/python /project/directory/schedule-init.py >> /project/directory/schedule.log 2>&1
+45 0 * * * /bin/python /project/directory/schedule_methods.py >> /project/directory/schedule.log 2>&1
 
 # Write bookings
 0 1 * * * /bin/python /project/directory/main.py >> /project/directory/crontab.log 2>&1
