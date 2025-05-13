@@ -8,7 +8,7 @@ import json
 pushbullet_id = ''
 connection_string = ''
 
-with open('config.json') as f:
+with open('/home/wren/Desktop/pi-tracker/pi-tracker/config.json') as f:
     json_data = json.load(f)
     connection_string = json_data['localPostgres']
     pushbullet_id = json_data['pushbullet']
@@ -53,4 +53,24 @@ if response_arr[2] == 'true':
 else:
 	push_str = push_str + 'FAILURE on Drive upload\n'
 
+# Missing data
+missing_query = """
+    SELECT date FROM schedule
+    WHERE local_success = FALSE
+    OR heroku_success = FALSE
+    OR drive_success = FALSE
+"""
+cur.execute(missing_query)
+missing_response = cur.fetchall()
+
+if len(missing_response):
+    missing_dates = []
+    print(len(missing_response))
+    for row in missing_response:
+	    print(row)
+	    missing_dates.append(row[0].strftime('%m/%d/%Y'))
+    
+    push_str = push_str + 'Data missing for ' + (', ').join(missing_dates) + '.\n'
+
+# Send push notification
 push = pb.push_note("Cop Tracker", push_str)

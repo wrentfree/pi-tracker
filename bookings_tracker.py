@@ -42,9 +42,11 @@ def check_dates(dates=[]):
         env_dates = [today]
     return env_dates
 
-def get_query_string(date, name, address, street_address, city, zipcode, age, agency, charges):
+def get_query_string(date, police_id, name, address, street_address, city, zipcode, age, agency, charges):
     if not date:
         date = 'NULL'
+    if not police_id:
+        police_id = 'NULL'
     if not name:
         name = 'NULL'
     if not address:
@@ -70,17 +72,18 @@ def get_query_string(date, name, address, street_address, city, zipcode, age, ag
     charges = charges.replace("'", "''")
     
     query_string = ("""INSERT INTO bookings
-(date, name, address, street_address, city, zipcode, age_at_arrest, arresting_agency, charges)
+(date, police_id, name, address, street_address, city, zipcode, age_at_arrest, arresting_agency, charges)
 VALUES(
 '{}',
 '{}',
 '{}',
 '{}',
 '{}',
+'{}',
 {},
 {},
 '{}',
-'{}');""".format(date, name, address, street_address, city, zipcode, age, agency, charges))
+'{}');""".format(date, police_id, name, address, street_address, city, zipcode, age, agency, charges))
     new_string = query_string.replace("'NULL'", "NULL")
     return(new_string)
 
@@ -88,39 +91,39 @@ def execute_queries(queries, db, conn, cur):
     for query in queries:
         try:
             cur.execute(query)
-        except psycopg2.errors.InFailedSqlTransaction:
-            print(db + ' transaction rolled back')
+        except psycopg2.errors.InFailedSqlTransaction as e:
+            print(db + ' transaction rolled back likely due to duplicate')
             print(query)
-            conn.rollback()
+            print(type(e))
+            print(e)
+            print('')
+            #conn.rollback()
         except Exception as e:
             print(db + ' query failed')
             print(query)
             print(type(e))
             print(e)
+            print('')
+            #conn.rollback()
         else:
             conn.commit()
+            #print('autocommited')
 
-# After changes made to the hamilton county website, we are no longer able to navigate by url and must update the value of an element instead.
-# Format dates will now keep an array of dates in the format of "Wed Mar 12 2025 09:26:58 GMT-0400 (Eastern Daylight Time)"
+
 def format_dates(dates):
     dates_info = []
     for date_info in dates:
-        today_dt = datetime.datetime.combine(today, datetime.datetime.min.time())
-        date_dt = datetime.datetime.combine(date_info, datetime.datetime.min.time())
-        url_num = (today_dt - date_dt).days
-        dates_info.append({'date_info': date_info,
-                           'formatted_date': date_info.strftime('%Y-%m-%d'),
-                           'csv': date_info.strftime('%b-%d-%Y') + '.csv'})
-   
+        dates_info.append({ 'date_info': date_info,
+                            'formatted_date': date_info.strftime('%Y-%m-%d'),
+                            'csv': date_info.strftime('%b-%d-%Y') + '.csv',
+                            'success': True,'queries': []})
     return dates_info
-    
-    
+                
 
 # Scrapes the previous day's booking table, returns csv name.
-# After website change, dates_info() now returns an array of [date_info, formatted_date, csv]
+# After website change, dates_info() now returns a dictionary of
+# {date_info, formatted_date, csv, success, queries}
 def table_scrape(dates):
-    query_list = []
-    csv_list = []
     dates = check_dates(dates)
     dates_info = format_dates(dates)
     for info in dates_info:
@@ -128,7 +131,6 @@ def table_scrape(dates):
         # Changed "url" variable to "day"
         day = info['formatted_date']
         csv_title = info['csv']
-        csv_list.append(csv_title)
         print('Scraping ' + csv_title)
         
         #Get information using curl bash
@@ -159,9 +161,19 @@ def table_scrape(dates):
 
         # Needs to be converted to parse API response
         # parses the rows
+        {"R_ID":"CA1A324A-ADFC-4024-BD9B-10A74A9DF36D","Verified":0,"Name":"Oscar Grouch",
+        "AddressStreet":"123 SESAME STREET","AddressCity":"CHATTANOOGA","AddressZip":"37423",
+        "HML_AGE_AT_ARREST":4,"HML_ARREST_AGENCY":"HC Sheriff","HML_COMMITTAL_DATE":"2025-04-01T00:00:00.000Z",
+        "HML_COMMITTAL_TIME":"3 :35","DT_Created":"2025-04-01T10:08:56.740Z",
+        "PrtOffense1":"TOO GROUCHY","PrtOffense2":"","PrtOffense3":"
+        """
+        # It also appears that sometimes a person will be booked twice.
+        # To prevent confusion, I've decided to also include the "R_ID"
+        # property in the API response and revise the UNIQUE constraints
+        # on the bookings PSQL table.
         # Writes the table to a csv named after yesterday's date
         with open(csv_title, 'w', newline='') as csvfile:
-            fieldnames = ['Name', 'Address', 'Street Address', 'City', 'Zipcode',
+            fieldnames = ['Police Id', 'Name', 'Address', 'Street Address', 'City', 'Zipcode',
                           'Age at Arrest', 'Arresting Agency', 'Charges']
             wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
             wr.writeheader()
@@ -170,9 +182,7 @@ def table_scrape(dates):
                 if len(json_data['body']) == 0:
                     raise('No rows found')
                 for row in json_data['body']:
-                    #print(row)
                     # Collects the list of charges
-                    # ch = [d.text for d in row.find_elements(By.CSS_SELECTOR, 'ul')]
                     charges = ''
                     i = 1
                     while i <= 48:
@@ -189,50 +199,39 @@ def table_scrape(dates):
                     
                     
                     # Format address
-                    zip_arr = zip_coder(row['AddressZip'])
-                    #print(zip_arr)
-                    
-                    # Add state even if zip code is missing to help with parsing
                     street_addr = row['AddressStreet']
                     city = row['AddressCity']
                     zipcode = row['AddressZip']
                     address = (street_addr + ' ' + city + ' ' + zipcode).strip()
                     
                     if not city:
-                        city = zipcoder(zipcode)[0]
+                        city = zip_coder(zipcode)[0]
                     if 'homeless' in address.lower():
                         street_addr = 'HOMELESS'
-                    
-                    """
-                    # Address values
-                    street_addr = street_addr_arr[0]
-                    city = zip_arr[0]
-                    zipcode = zip_arr[1]
-                    
-                    # Backup values if zipcode parser fails due to bad zip code
-                    if len(city) == 0:
-                        city = street_addr_arr[1]
-                    """
                     
                     # Format all other info
                     name = row['Name']
                     age = row['HML_AGE_AT_ARREST']
                     agency = row['HML_ARREST_AGENCY']
+                    police_id = row['R_ID']
                     
                     # Write row in csv file
-                    wr.writerow({'Name': name, 'Address': address, 'Street Address': street_addr,
+                    wr.writerow({'Police Id': police_id, 'Name': name, 'Address': address, 'Street Address': street_addr,
                                     'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
                                     'Arresting Agency': agency, 'Charges': charges})
                     
                     # Write row to db
-                    query = get_query_string(date_info.strftime('%m/%d/%Y'),\
-                                        name, address, street_addr, city, zipcode, age, agency, charges)
-                    query_list.append(query)
+                    info['queries'].append(get_query_string(date_info.strftime('%m/%d/%Y'),\
+                                        police_id, name, address, street_addr,\
+                                        city, zipcode, age, agency, charges))
             except Exception as e:
-                print('Issue parsing addresses from table')
+                print('Issue parsing json body')
                 #driver.quit()
-                raise e   
+                #Continue to next day
+                info['success'] = False
+                print(e)
+            finally:
+                continue
 
     print('Done')
-    #driver.quit()
-    return {'queries': query_list, 'dates_info': dates_info}
+    return dates_info

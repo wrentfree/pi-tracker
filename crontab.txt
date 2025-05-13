@@ -1,0 +1,14 @@
+# Initialize scheduler
+45 0 * * * /bin/python /project/directory/schedule-init.py >> /project/directory/schedule.log 2>&1
+
+# Write bookings
+0 1 * * * /bin/python /project/directory/index.py >> /project/directory/crontab.log 2>&1
+
+# Retry if failed
+0 5 * * * /bin/python /project/directory/index.py >> /project/directory/crontab.log 2>&1
+
+# Push Notification
+15 6 * * * /bin/python /project/directory/push-notifications.py
+
+# Delete generated csvs
+30 6 * * * rm /project/directory/*.csv
