@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 
-from PIL import Image
-from Screenshot import Screenshot
 from datetime import date
 from datetime import timedelta
-from drive_upload import *
-from booking_folder_maker import *
+from drive_methods import *
 from address_parse import *
 import csv
 import psycopg2
@@ -16,9 +13,6 @@ import uncurl
 
 today = date.today()
 today_string = today.strftime('%b-%d-%Y')
-screenshot_string = today.strftime('%b-%d-%Y %H:%M:%S') + '.png'
-print(today_string + ' Starting ...')
-ob = Screenshot.Screenshot()
 
 def check_dates(dates=[]):
     env_dates = []

@@ -7,8 +7,12 @@ import json
 
 pushbullet_id = ''
 connection_string = ''
+directory = '/home/wren/Desktop/pi-tracker/pi-tracker/'
 
-with open('/home/wren/Desktop/pi-tracker/pi-tracker/config.json') as f:
+# If there is a DIRECTORY env variable, set it here
+if os.getenv("DIRECTORY"): directory = os.getenv("DIRECTORY")
+
+with open(directory + 'config.json') as f:
     json_data = json.load(f)
     connection_string = json_data['localPostgres']
     pushbullet_id = json_data['pushbullet']
