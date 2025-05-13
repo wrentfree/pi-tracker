@@ -161,7 +161,6 @@ def table_scrape(dates):
 
         # Needs to be converted to parse API response
         # parses the rows
-        """
         {"R_ID":"CA1A324A-ADFC-4024-BD9B-10A74A9DF36D","Verified":0,"Name":"Oscar Grouch",
         "AddressStreet":"123 SESAME STREET","AddressCity":"CHATTANOOGA","AddressZip":"37423",
         "HML_AGE_AT_ARREST":4,"HML_ARREST_AGENCY":"HC Sheriff","HML_COMMITTAL_DATE":"2025-04-01T00:00:00.000Z",
