@@ -29,6 +29,7 @@ def write_to_local(results):
 	for date_info in results:
 		if date_info['success']:
 			execute_queries(date_info['queries'], 'local', conn, cur)
+			print('\nEntries written to local for ' + date_info['formatted_date'])
 			
 			query = "UPDATE schedule SET local_success = TRUE WHERE date = '{}';".format(date_info['formatted_date'])
 			cur.execute(query)
