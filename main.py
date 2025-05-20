@@ -26,7 +26,7 @@ if date_arr:
 	for day in date_arr:
 		result_arr.append(Booking(day))
 	
-	#write_to_all(result_arr)
+	write_to_all(result_arr)
 	failed_dates = []
 	for booking in result_arr:
 		if not booking.success:
