@@ -20,10 +20,6 @@ if os.getenv("DATES"):
 else:
 	for d in missing_arr:
 		date_arr.append(d[0].strftime("%m/%d/%Y"))
-		
-# If no DIRECTORY env variable, set default here
-if not os.getenv("DIRECTORY"):
-	os.environ["DIRECTORY"] = "/home/wren/Desktop/pi-tracker/pi-tracker/"
 	
 #Iterate through missing
 #Scrape online tables for each date
@@ -44,4 +40,3 @@ if date_arr:
 		if not result['success']:
 			failed_dates.append(result['formatted_date'])
 	if failed_dates: print('Scraping failed for ' + ', '.join(failed_dates))
-

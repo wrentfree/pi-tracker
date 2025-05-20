@@ -1,11 +1,5 @@
 import usaddress
 from uszipcode import SearchEngine
-import re
-
-def zip_tester(zipcode):
-    search = SearchEngine()
-    zipcode_info = search.by_zipcode(zipcode)
-    # print(zipcode_info.to_dict())
 
 #Use zip code to get info; most reliable
 def zip_coder(zipcode):

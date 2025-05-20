@@ -11,20 +11,24 @@ the much quicker approach of making an API request is now the main method of obt
 
 Other dependencies:
 ```
-sudo apt-get install xvfb
-sudo pip install PyVirtualDisplay
-sudo pip install xvfbwrapper
-sudo pip install psycopg2
+pip --user install usaddress uszipcode psycopg2 uncurl pushbullet.py
+pip --user install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ```
-Pillow, usaddress, uszipcode, uncurl, google modules, and possibly a few others are additional libraries used and installed via pip. You may have to run the program to see if any additional 
-libraries are missing.
 
 ### Google API
 
-You will need to follow Google's Developer instructions if you would like to create copies of the reports in your drive by copying the `token.json.example` file and filling in your personal information there.
+You will need to follow Google's Developer [instructions](https://developers.google.com/workspace/drive/api/quickstart/python) if you would like to create copies of the reports in your Google Drive. Once you create a client id, download the client secret, add it to the project directory, and rename it to `credentials.json`.
+Once the file is added, run `drive_quickstart.py`, follow the instructions on your browser, and it will generate your new `token.json` file.
+You will only have to do this once and if you wish, you may remove `drive_quickstart.py` and `credentials.json` afterwards.
 
 ### Postgres
-If you would like to record the information in a PostgreSQL database, you will need to set them up yourself, then fill the information into a copy of the `config.json.example` file. I have not yet created a script for the intial creation of the relative tables.
+Install postgres on your computer then use the `table_creation.sql` script to create local tables.
+You can also use this script to create a remote copy of the `bookings` table.
+```
+psql -U your-username -c 'create database bookings;'
+psql -U your-username -d bookings -a -f table_creation.sql
+```
+This creates a database named bookings with two tables: `bookings` and `schedule`.
 
 ### Pushbullet
 If you would like updates pushed to your phone, you will have to configure the `config.json.example` file.
