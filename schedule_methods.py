@@ -11,6 +11,7 @@ import json
 connection_string = ''
 today = date.today()
 today_string = today.strftime('%b-%d-%Y')
+date_to_be_processed = date.today() - timedelta(days=2)
 
 directory = '.'
 
@@ -42,7 +43,7 @@ def check_dates(dates=[]):
                 format_dates.append(date_info)
         env_dates = format_dates
     else:
-        env_dates = [today]
+        env_dates = [date_to_be_processed]
     return env_dates
 
 #Returns [(date, local_success, heroku_success, drive_success)] in list of
@@ -77,7 +78,6 @@ def schedule_init():
     
     if last_date < date_to_be_processed:
 	    missing_days = (date_to_be_processed - last_date).days - 1
-	    print(missing_days)
 	    while missing_days >= 0:
 		    date_string = (date_to_be_processed - timedelta(missing_days)).strftime('%m/%d/%Y')
 		    create_query = "INSERT INTO schedule (date, drive_success, local_success, heroku_success) VALUES ('{}', FALSE, FALSE, FALSE)".format(date_string)

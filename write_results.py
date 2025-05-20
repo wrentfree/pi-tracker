@@ -1,7 +1,7 @@
 import psycopg2
 import os
 import datetime
-from bookings_tracker import *
+from bookings_tracker import Booking
 from drive_methods import *
 import json
 import copy
@@ -26,12 +26,12 @@ def write_to_local(results):
 	conn.autocommit = True
 	cur = conn.cursor()
 	
-	for date_info in results:
-		if date_info['success']:
-			execute_queries(date_info['queries'], 'local', conn, cur)
-			print('\nEntries written to local for ' + date_info['formatted_date'])
+	for booking in results:
+		if booking.success:
+			execute_queries(booking.queries, 'local', conn, cur)
+			print('\nEntries written to local for ' + booking.formatted_date)
 			
-			query = "UPDATE schedule SET local_success = TRUE WHERE date = '{}';".format(date_info['formatted_date'])
+			query = "UPDATE schedule SET local_success = TRUE WHERE date = '{}';".format(booking.formatted_date)
 			cur.execute(query)
 	conn.close()
 	cur.close()
@@ -41,17 +41,17 @@ def write_to_heroku(results):
 	conn.autocommit = True
 	cur = conn.cursor()
 	
-	for date_info in results:
-		if date_info['success']:
-			execute_queries(date_info['queries'], 'heroku', conn, cur)
-			print('\nEntries written to heroku for ' + date_info['formatted_date'])
+	for booking in results:
+		if booking.success:
+			execute_queries(booking.queries, 'heroku', conn, cur)
+			print('\nEntries written to heroku for ' + booking.formatted_date)
 			
 			# Update schedule on local
 			conn.close()
 			cur.close()
 			conn = psycopg2.connect(local_string)
 			cur = conn.cursor()
-			query = "UPDATE schedule SET heroku_success = TRUE WHERE date = '{}';".format(date_info['formatted_date'])
+			query = "UPDATE schedule SET heroku_success = TRUE WHERE date = '{}';".format(booking.formatted_date)
 			cur.execute(query)
 			conn.commit()
 	conn.close()
@@ -65,13 +65,14 @@ def write_to_drive(results):
 	conn.autocommit = True
 	cur = conn.cursor()
 	
-	for date_info in results:
-		if date_info['success']:
-			folder_id = get_folder('Bookings ' + date_info['date_info'].strftime('%b-%Y'))
-			file_name = date_info['csv']
+	for booking in results:
+		if booking.success:
+			booking.write_csv()
+			folder_id = get_folder('Bookings ' + booking.date_object.strftime('%b-%Y'))
+			file_name = booking.csv_title
 			upload_to_folder(real_folder_id=folder_id, file_name=file_name, file_type="text/csv")
 			
-			query = "UPDATE schedule SET drive_success = TRUE WHERE date = '{}';".format(date_info['formatted_date'])
+			query = "UPDATE schedule SET drive_success = TRUE WHERE date = '{}';".format(booking.formatted_date)
 			cur.execute(query)
 	conn.close()
 	cur.close()
@@ -80,3 +81,14 @@ def write_to_all(results):
 	write_to_local(copy.deepcopy(results))
 	write_to_heroku(copy.deepcopy(results))
 	write_to_drive(copy.deepcopy(results))
+
+
+def execute_queries(queries, db, conn, cur):
+    for query in queries:
+        try:
+            cur.execute(query)
+        except psycopg2.errors.UniqueViolation:
+            conn.rollback()
+        else:
+            conn.commit()
+            #print('autocommited')

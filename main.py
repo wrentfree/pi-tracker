@@ -1,6 +1,6 @@
 import os
 import datetime
-from bookings_tracker import table_scrape
+from bookings_tracker import *
 from write_results import write_to_all
 from schedule_methods import *
 from push_notifications import push_note
@@ -28,21 +28,15 @@ date_arr = check_dates(date_arr)
 	
 #Iterate through missing
 #Scrape online tables for each date
-
-print(date_arr)
 if date_arr:
-	results = table_scrape(date_arr)
-	#print(results)
+	result_arr = []
+	for day in date_arr:
+		result_arr.append(Booking(day))
 	
-	# results is [{date_info: Date object,
-	#			  formatted_date: date string,
-	#             csv: csv title string,
-	#			  success: boolean for successful scrape for that date,
-	#			  queries: ["list of query strings"]}]
-	#write_to_all(results)
+	write_to_all(result_arr)
 	failed_dates = []
-	for result in results:
-		if not result['success']:
-			failed_dates.append(result['formatted_date'])
+	for booking in result_arr:
+		if not booking.success:
+			failed_dates.append(booking.formatted_date)
 	if failed_dates: print('Scraping failed for ' + ', '.join(failed_dates))
 	push_note()

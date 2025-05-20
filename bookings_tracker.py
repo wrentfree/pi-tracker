@@ -14,98 +14,61 @@ import uncurl
 today = date.today()
 today_string = today.strftime('%b-%d-%Y')
 
-def get_query_string(date, police_id, name, address, street_address, city, zipcode, age, agency, charges):
-    if not date:
-        date = 'NULL'
-    if not police_id:
-        police_id = 'NULL'
-    if not name:
-        name = 'NULL'
-    if not address:
-        address = 'NULL'
-    if not street_address:
-        street_address = 'NULL'
-    if not city:
-        city = 'NULL'
-    if not zipcode:
-        zipcode = 'NULL'
-    if not age:
-        age = 'NULL'
-    if not agency:
-        agency = 'NULL'
-    if not charges:
-        charges = 'NULL'
+class Booking:
+    """This class handles booking data for a specific date
+
+    Parameters
+    ----------
+    date_object : datetime.date
+        The date to be queried for booking data
     
-    name = name.replace("'", "''")
-    address = address.replace("'", "''")
-    street_address = street_address.replace("'", "''")
-    city = city.replace("'", "''")
-    agency = agency.replace("'", "''")
-    charges = charges.replace("'", "''")
+    Attributes
+    ----------
+    date_object : date
+        The date object initially passed
+    formatted_date : str
+        The date reformatted as a string
+    csv_title : str
+        Formatted CSV title
+    success : bool
+        Whether the API request was retrieved and formatted successfully
+    json_response: json
+        JSON body of API response
+    formatted_response : [dict]
+        JSON response formatted as a list of dictionaries
+            'Police Id'
+            'Name'
+            'Address'
+            'Street Address'
+            'City'
+            'Zipcode'
+            'Age at Arrest'
+            'Arresting Agency'
+            'Charges'
+    queries : [str]
+        List of postgreSQL queries for updating dbs
     
-    query_string = ("""INSERT INTO bookings
-(date, police_id, name, address, street_address, city, zipcode, age_at_arrest, arresting_agency, charges)
-VALUES(
-'{}',
-'{}',
-'{}',
-'{}',
-'{}',
-'{}',
-{},
-{},
-'{}',
-'{}');""".format(date, police_id, name, address, street_address, city, zipcode, age, agency, charges))
-    new_string = query_string.replace("'NULL'", "NULL")
-    return(new_string)
+    Methods
+    -------
 
-def execute_queries(queries, db, conn, cur):
-    for query in queries:
+    """
+
+    def __init__(self, date_object):
+        self.date_object = date_object
+        self.formatted_date = date_object.strftime('%Y-%m-%d')
+        self.csv_title = date_object.strftime('%b-%d-%Y') + '.csv'
+        self.success = True
+        self.json_response = self.api_request(date_object)
+        self.formatted_response = []
+        if self.success and self.json_response: self._format_response()
+        self.queries = []
+        if self.success and self.formatted_response:
+            for row in self.formatted_response:
+                self._format_query(row)
+    
+    def api_request(self, date_object):
         try:
-            cur.execute(query)
-        except psycopg2.errors.InFailedSqlTransaction as e:
-            print(db + ' transaction rolled back likely due to duplicate')
-            print(query)
-            print(type(e))
-            print(e)
-            print('')
-            #conn.rollback()
-        except Exception as e:
-            print(db + ' query failed')
-            print(query)
-            print(type(e))
-            print(e)
-            print('')
-            #conn.rollback()
-        else:
-            conn.commit()
-            #print('autocommited')
-
-
-def format_dates(dates):
-    dates_info = []
-    for date_info in dates:
-        dates_info.append({ 'date_info': date_info,
-                            'formatted_date': date_info.strftime('%Y-%m-%d'),
-                            'csv': date_info.strftime('%b-%d-%Y') + '.csv',
-                            'success': True,'queries': []})
-    return dates_info
-                
-
-# Scrapes the previous day's booking table, returns csv name.
-# After website change, dates_info() now returns a dictionary of
-# {date_info, formatted_date, csv, success, queries}
-def table_scrape(dates):
-    dates_info = format_dates(dates)
-    for info in dates_info:
-        date_info = info['date_info']
-        # Changed "url" variable to "day"
-        day = info['formatted_date']
-        csv_title = info['csv']
-        print('Scraping ' + csv_title)
-        
-        #Get information using curl bash
-        try:
+            day = self.formatted_date
             curl_string = ("""curl 'https://hcsheriff.gov/Corrections/api' \
               -H 'accept: */*' \
               -H 'accept-language: en-GB,en-US;q=0.9,en;q=0.8' \
@@ -124,86 +87,121 @@ def table_scrape(dates):
             ctx = uncurl.parse_context(curl_string)
             r = requests.request(ctx.method.upper(), ctx.url, data=ctx.data, cookies=ctx.cookies, headers=ctx.headers, auth=ctx.auth)
             # print(r)
-            data = r.text
-            #print(data)
+            return r.text
         except Exception as e:
             print('Issue making api request')
-            raise e
+            print(e)
+            self.success = False
+    
+    def _format_response(self):
+        try:
+            json_data = json.loads(self.json_response)
+            if len(json_data['body']) == 0:
+                raise('No rows found')
+            for row in json_data['body']:
+                # Collects the list of charges
+                charges = ''
+                i = 1
+                while i <= 48:
+                    key = 'PrtOffense' + str(i)
+                    if not row[key]:
+                        break
+                    if i == 1:
+                        charges = charges + row[key]
+                    else:
+                        charges = charges + ',' + row[key]
+                    i+=1
+                #print(charges)
+                
+                
+                
+                # Format address
+                street_addr = row['AddressStreet']
+                city = row['AddressCity']
+                zipcode = row['AddressZip']
+                address = (street_addr + ' ' + city + ' ' + zipcode).strip()
+                
+                if not city:
+                    city = zip_coder(zipcode)[0]
+                if 'homeless' in address.lower():
+                    street_addr = 'HOMELESS'
+                
+                # Format all other info
+                name = row['Name']
+                age = row['HML_AGE_AT_ARREST']
+                agency = row['HML_ARREST_AGENCY']
+                police_id = row['R_ID']
+                
+                # Write row in csv file
+                self.formatted_response.append({'Police Id': police_id, 'Name': name, 'Address': address, 'Street Address': street_addr,
+                                'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
+                                'Arresting Agency': agency, 'Charges': charges})
+        except Exception as e:
+            print('Issue parsing json body')
+            self.success = False
+            print(e)
+    
+    def _format_query(self, row):
+        date = self.date_object.strftime('%m/%d/%Y')
+        police_id = row['Police Id']
+        name = row['Name']
+        address = row['Address']
+        street_address = row['Street Address']
+        city = row['City']
+        zipcode = row['Zipcode']
+        age = row['Age at Arrest']
+        agency = row['Arresting Agency']
+        charges = row['Charges']
 
-        # Needs to be converted to parse API response
-        # parses the rows
-        """
-        {"R_ID":"CA1A324A-ADFC-4024-BD9B-10A74A9DF36D","Verified":0,"Name":"Oscar Grouch",
-        "AddressStreet":"123 SESAME STREET","AddressCity":"CHATTANOOGA","AddressZip":"37423",
-        "HML_AGE_AT_ARREST":4,"HML_ARREST_AGENCY":"HC Sheriff","HML_COMMITTAL_DATE":"2025-04-01T00:00:00.000Z",
-        "HML_COMMITTAL_TIME":"3 :35","DT_Created":"2025-04-01T10:08:56.740Z",
-        "PrtOffense1":"TOO GROUCHY","PrtOffense2":"","PrtOffense3":"}
-        """
-        # It also appears that sometimes a person will be booked twice.
-        # To prevent confusion, I've decided to also include the "R_ID"
-        # property in the API response and revise the UNIQUE constraints
-        # on the bookings PSQL table.
-        # Writes the table to a csv named after yesterday's date
-        with open(csv_title, 'w', newline='') as csvfile:
+        if not date:
+            date = 'NULL'
+        if not police_id:
+            police_id = 'NULL'
+        if not name:
+            name = 'NULL'
+        if not address:
+            address = 'NULL'
+        if not street_address:
+            street_address = 'NULL'
+        if not city:
+            city = 'NULL'
+        if not zipcode:
+            zipcode = 'NULL'
+        if not age:
+            age = 'NULL'
+        if not agency:
+            agency = 'NULL'
+        if not charges:
+            charges = 'NULL'
+        
+        name = name.replace("'", "''")
+        address = address.replace("'", "''")
+        street_address = street_address.replace("'", "''")
+        city = city.replace("'", "''")
+        agency = agency.replace("'", "''")
+        charges = charges.replace("'", "''")
+        
+        query_string = ("""INSERT INTO bookings
+                            (date, police_id, name, address, street_address, city, zipcode, age_at_arrest, arresting_agency, charges)
+                            VALUES(
+                            '{}',
+                            '{}',
+                            '{}',
+                            '{}',
+                            '{}',
+                            '{}',
+                            {},
+                            {},
+                            '{}',
+                            '{}');""".format(date, police_id, name, address, street_address, city, zipcode, age, agency, charges))
+        new_string = query_string.replace("'NULL'", "NULL")
+        self.queries.append(new_string)
+    
+    def write_csv(self):
+        with open(self.csv_title, 'w', newline='') as csvfile:
             fieldnames = ['Police Id', 'Name', 'Address', 'Street Address', 'City', 'Zipcode',
                           'Age at Arrest', 'Arresting Agency', 'Charges']
             wr = csv.DictWriter(csvfile, fieldnames=fieldnames)
             wr.writeheader()
-            try:
-                json_data = json.loads(data)
-                if len(json_data['body']) == 0:
-                    raise('No rows found')
-                for row in json_data['body']:
-                    # Collects the list of charges
-                    charges = ''
-                    i = 1
-                    while i <= 48:
-                        key = 'PrtOffense' + str(i)
-                        if not row[key]:
-                            break
-                        if i == 1:
-                            charges = charges + row[key]
-                        else:
-                            charges = charges + ',' + row[key]
-                        i+=1
-                    #print(charges)
-                    
-                    
-                    
-                    # Format address
-                    street_addr = row['AddressStreet']
-                    city = row['AddressCity']
-                    zipcode = row['AddressZip']
-                    address = (street_addr + ' ' + city + ' ' + zipcode).strip()
-                    
-                    if not city:
-                        city = zip_coder(zipcode)[0]
-                    if 'homeless' in address.lower():
-                        street_addr = 'HOMELESS'
-                    
-                    # Format all other info
-                    name = row['Name']
-                    age = row['HML_AGE_AT_ARREST']
-                    agency = row['HML_ARREST_AGENCY']
-                    police_id = row['R_ID']
-                    
-                    # Write row in csv file
-                    wr.writerow({'Police Id': police_id, 'Name': name, 'Address': address, 'Street Address': street_addr,
-                                    'City': city, 'Zipcode': zipcode, 'Age at Arrest': age,
-                                    'Arresting Agency': agency, 'Charges': charges})
-                    
-                    # Write row to db
-                    info['queries'].append(get_query_string(date_info.strftime('%m/%d/%Y'),\
-                                        police_id, name, address, street_addr,\
-                                        city, zipcode, age, agency, charges))
-            except Exception as e:
-                print('Issue parsing json body')
-                #driver.quit()
-                #Continue to next day
-                info['success'] = False
-                print(e)
-            finally:
-                continue
-
-    print('Done')
-    return dates_info
+            for row in self.formatted_response:
+                wr.writerow(row)
