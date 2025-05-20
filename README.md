@@ -11,8 +11,8 @@ the much quicker approach of making an API request is now the main method of obt
 
 Other dependencies:
 ```
-pip --user install usaddress uszipcode psycopg2 uncurl pushbullet.py
-pip --user install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+pip install --user usaddress uszipcode psycopg2 uncurl pushbullet.py sqlalchemy_mate==2.0.0.0 python-Levenshtein
+pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ```
 
 ### Google API
@@ -34,10 +34,7 @@ This creates a database named bookings with two tables: `bookings` and `schedule
 If you would like updates pushed to your phone, you will have to configure the `config.json.example` file.
 
 ## Scripts
+Setting up jobs on Windows. Instead of using crontab like you might on Linux systems, I created a basic task in the Task Scheduler.
+You can use `cron_job.bat` as an example script.
 
-Using crontab, I've created a series of executions that
-1. Run the 'schedule-methods.py` file which creates a row in a PostgreSQL table for tracking script completion successes.
-2. Run the `main.py` file containing the scripts to be run and updates the script completion table.
-3. Run `push-notification.py` which queries the script completion table and sends me a push notification on my phone reporting script success or failure.
-
-It's important to note that `main.py` will not function properly without first running `schedule_methods.py`
+Using either crontab or Task scheduler, I run `main.py` daily.

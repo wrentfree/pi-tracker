@@ -1,4 +1,4 @@
 {"remotePostgres":"host= user= password= dbname=",
-"localPostgres":"host= user= password= dbname=",
+"localPostgres":"host=localhost user= password= dbname=bookings",
 "pushbullet":"",
 "driveFolderId":""}

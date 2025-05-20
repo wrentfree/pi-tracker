@@ -6,7 +6,7 @@ from drive_methods import *
 import json
 import copy
 
-directory = '/home/wren/Desktop/pi-tracker/pi-tracker/'
+directory = '.'
 
 # If there is a DIRECTORY env variable, set it here
 if os.getenv("DIRECTORY"): directory = os.getenv("DIRECTORY")
@@ -14,7 +14,7 @@ if os.getenv("DIRECTORY"): directory = os.getenv("DIRECTORY")
 remote_string = ''
 local_string = ''
 
-with open(directory + 'config.json') as f:
+with open(directory + '/config.json') as f:
     json_data = json.load(f)
     remote_string = json_data['remotePostgres']
     local_string = json_data['localPostgres']

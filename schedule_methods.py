@@ -12,14 +12,38 @@ connection_string = ''
 today = date.today()
 today_string = today.strftime('%b-%d-%Y')
 
-directory = '/home/wren/Desktop/pi-tracker/pi-tracker/'
+directory = '.'
 
 # If there is a DIRECTORY env variable, set it here
 if os.getenv("DIRECTORY"): directory = os.getenv("DIRECTORY")
 
-with open(directory + 'config.json') as f:
+with open(directory + '/config.json') as f:
     json_data = json.load(f)
     connection_string = json_data['localPostgres']
+
+# Parses any date strings passed as environment variables and returns
+# date objects
+def check_dates(dates=[]):
+    env_dates = []
+    if os.getenv('DATES') == ['all']:
+         env_dates = 'all'
+    elif os.getenv('DATES'):
+        env_dates = os.getenv('DATES').split(',')
+        format_dates = []
+        for date_info in env_dates:
+            format_dates.append(datetime.datetime.strptime(date_info, '%m/%d/%Y'))
+        env_dates = format_dates
+    elif len(dates) > 0:
+        format_dates = []
+        for date_info in dates:
+            if type(date_info) is str:
+                format_dates.append(datetime.datetime.strptime(date_info, '%m/%d/%Y'))
+            elif type(date_info) is datetime.datetime:
+                format_dates.append(date_info)
+        env_dates = format_dates
+    else:
+        env_dates = [today]
+    return env_dates
 
 #Returns [(date, local_success, heroku_success, drive_success)] in list of
 #tuples

@@ -14,28 +14,6 @@ import uncurl
 today = date.today()
 today_string = today.strftime('%b-%d-%Y')
 
-def check_dates(dates=[]):
-    env_dates = []
-    if os.getenv('DATES') == ['all']:
-         env_dates = 'all'
-    elif os.getenv('DATES'):
-        env_dates = os.getenv('DATES').split(',')
-        format_dates = []
-        for date_info in env_dates:
-            format_dates.append(datetime.datetime.strptime(date_info, '%m/%d/%Y'))
-        env_dates = format_dates
-    elif len(dates) > 0:
-        format_dates = []
-        for date_info in dates:
-            if type(date_info) is str:
-                format_dates.append(datetime.datetime.strptime(date_info, '%m/%d/%Y'))
-            elif type(date_info) is datetime.datetime:
-                format_dates.append(date_info)
-        env_dates = format_dates
-    else:
-        env_dates = [today]
-    return env_dates
-
 def get_query_string(date, police_id, name, address, street_address, city, zipcode, age, agency, charges):
     if not date:
         date = 'NULL'
@@ -118,7 +96,6 @@ def format_dates(dates):
 # After website change, dates_info() now returns a dictionary of
 # {date_info, formatted_date, csv, success, queries}
 def table_scrape(dates):
-    dates = check_dates(dates)
     dates_info = format_dates(dates)
     for info in dates_info:
         date_info = info['date_info']
