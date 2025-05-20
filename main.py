@@ -15,16 +15,9 @@ from push_notifications import push_note
 #Returns [(date, local_success, heroku_success, drive_success)] in list of tuples
 schedule_init()
 
-missing_arr = schedule_check()
-date_arr = []
+date_arr = schedule_check()
 if os.getenv("DATES"):
-	date_arr = os.getenv("DATES").split(',')
-else:
-	for d in missing_arr:
-		date_arr.append(d[0].strftime("%m/%d/%Y"))
-
-# Reformat date strings into date objects
-date_arr = check_dates(date_arr)
+	date_arr = check_dates(os.getenv("DATES").split(','))
 	
 #Iterate through missing
 #Scrape online tables for each date
@@ -33,7 +26,7 @@ if date_arr:
 	for day in date_arr:
 		result_arr.append(Booking(day))
 	
-	write_to_all(result_arr)
+	#write_to_all(result_arr)
 	failed_dates = []
 	for booking in result_arr:
 		if not booking.success:
