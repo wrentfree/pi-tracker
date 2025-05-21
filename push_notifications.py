@@ -3,6 +3,7 @@ import os
 import datetime
 from datetime import date, timedelta
 from pushbullet import Pushbullet
+from schedule_methods import *
 import json
 
 pushbullet_id = ''
@@ -24,56 +25,35 @@ def push_note():
     # push = pb.push_note("Test", 'Does this show up on my phone?')
 
     # Verifiy successes from schedule table
+    schedule_date = date.today()-timedelta(days=2)
+    schedule_string = schedule_date.strftime('%m/%d/%Y')
+    schedule = Schedule(schedule_date)
 
-    conn = psycopg2.connect(connection_string)
-    cur = conn.cursor()
-
-    today_string = (date.today()-timedelta(days=2)).strftime('%m/%d/%Y')
-    query = "SELECT local_success,heroku_success,drive_success FROM schedule WHERE date='{}'".format(today_string)
-
-    cur.execute(query)
-    response = cur.fetchone()
-
-    # Convert tuple to str
-    response_str = ', '.join(map(str, response)).lower()
-    response_arr = response_str.split(', ')
-
-    push_str = "Results for {}\n".format(today_string)
+    push_str = "Results for {}\n".format(schedule_string)
 
     # Local
-    if response_arr[0] == 'true':
+    if schedule.local_success:
         push_str = push_str + 'Local Database succesfully executed\n'
     else:
         push_str = push_str + 'FAILURE on Local Database\n'
 
     # Heroku
-    if response_arr[1] == 'true':
+    if schedule.heroku_success:
         push_str = push_str + 'Heroku Database succesfully executed\n'
     else:
         push_str = push_str + 'FAILURE on Heroku Database\n'
 
     # Drive
-    if response_arr[2] == 'true':
+    if schedule.drive_success:
         push_str = push_str + 'Drive upload succesfully executed\n'
     else:
         push_str = push_str + 'FAILURE on Drive upload\n'
 
-    # Missing data
-    missing_query = """
-        SELECT date FROM schedule
-        WHERE local_success = FALSE
-        OR heroku_success = FALSE
-        OR drive_success = FALSE
-    """
-    cur.execute(missing_query)
-    missing_response = cur.fetchall()
-
-    if len(missing_response):
+    schedule_results = schedule_check()
+    if len(schedule_results):
         missing_dates = []
-        print(len(missing_response))
-        for row in missing_response:
-            print(row)
-            missing_dates.append(row[0].strftime('%m/%d/%Y'))
+        for row in schedule_results:
+            missing_dates.append(row['date'].strftime('%m/%d/%Y'))
         
         push_str = push_str + 'Data missing for ' + (', ').join(missing_dates) + '.\n'
 
