@@ -31,7 +31,8 @@ psql -U your-username -d bookings -a -f table_creation.sql
 This creates a database named bookings with two tables: `bookings` and `schedule`.
 
 ### Pushbullet
-If you would like updates pushed to your phone, you will have to configure the `config.json.example` file.
+If you would like updates pushed to your phone, create a Pushbullet account and install the app on the device you want notifications on.
+Follow these [instructions](https://docs.pushbullet.com/#api-quick-start) to create an access token in your account settings and copy and paste the key into the `pushbullet` config attribute.
 
 ## Scripts
 Setting up jobs on Windows. Instead of using crontab like you might on Linux systems, I created a basic task in the Task Scheduler.
