@@ -11,14 +11,14 @@ from datetime import timedelta
 import json
 import os
 
-directory = '/home/wren/Desktop/pi-tracker/pi-tracker/'
+directory = '.'
 
 # If there is a DIRECTORY env variable, set it here
 if os.getenv("DIRECTORY"): directory = os.getenv("DIRECTORY")
 
 booking_id = ''
 
-with open(directory + 'config.json') as f:
+with open(directory + '/config.json') as f:
     json_data = json.load(f)
     booking_id = json_data['driveFolderId']
 
@@ -31,7 +31,7 @@ def create_folder(folder_name, parent_id):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    creds = Credentials.from_authorized_user_file(directory + 'token.json')
+    creds = Credentials.from_authorized_user_file(directory + '/token.json')
 
     try:
         # create drive api client
@@ -56,7 +56,7 @@ def create_folder(folder_name, parent_id):
 # Searches for a folder in google drive    
 def search_file(query):
     # Search file in drive location
-    creds = Credentials.from_authorized_user_file(directory + 'token.json')
+    creds = Credentials.from_authorized_user_file(directory + '/token.json')
 
 
     try:
@@ -87,7 +87,7 @@ def search_file(query):
 
 # Checks if file or folder is in a specific folder
 def is_in_folder(parent_id, child_id):
-    creds = Credentials.from_authorized_user_file(directory + 'token.json')
+    creds = Credentials.from_authorized_user_file(directory + '/token.json')
 
     try:
         # create drive api client
@@ -129,7 +129,7 @@ def upload_to_folder(real_folder_id, file_name, file_type):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    creds = Credentials.from_authorized_user_file(directory + 'token.json')
+    creds = Credentials.from_authorized_user_file(directory + '/token.json')
 
     try:
         # create drive api client

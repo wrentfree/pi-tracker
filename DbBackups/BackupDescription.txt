@@ -1,0 +1,2 @@
+Use this folder for storing backups of your database.
+You can use tools like pg_dump or PG Admin 4!
